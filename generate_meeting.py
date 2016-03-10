@@ -123,7 +123,7 @@ def format_attendees(l, t=5, at=True):
     elif length == t:
         return ", ".join(l[:-1]) + " & 1 other"
     else:
-        return ", ".join(l[:t-1]) + " & +{} others".format(length - (t - 1))
+        return ", ".join(l[:t-1]) + " & {} others".format(length - (t - 1))
 
 
 def send_to_slack(pretty_attendees, pretty_whos_out, sc):

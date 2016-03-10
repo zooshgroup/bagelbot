@@ -41,6 +41,8 @@ def check_attendance(store, sc, users=None):
                 if event['type'] == 'message' and event['channel'] in messages_sent and float(event['ts']) > float(messages_sent[event['channel']]['ts']):
                     lower_txt = event['text'].lower()
                     user = messages_sent[event['channel']]['user']
+                    print(u"{} responded with '{}'".format(user, event['text']))
+
                     user_responded = False
                     if lower_txt in YES:
                         user_responded = True
@@ -58,7 +60,6 @@ def check_attendance(store, sc, users=None):
                         )
 
                     if user_responded:
-                        print(u"{} responded with '{}'".format(user, event['text']))
                         # User has responded to bagelbot, don't listen to this channel anymore.
                         messages_sent.pop(event['channel'])
 
