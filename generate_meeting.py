@@ -8,7 +8,7 @@ from config import PAIRING_SIZE, SLACK_CHANNEL
 from utils import YES, NO, initialize
 
 
-def create_meetings(store, sc, size, whos_out, force_create=False):
+def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=False):
     """Randomly generates sets of pairs for (usually) 1 on 1 meetings for a Slack team.
 
     Given the `size`, list of all users and who is out today, it generates a randomized set of people
@@ -20,6 +20,7 @@ def create_meetings(store, sc, size, whos_out, force_create=False):
         size (int): Pair size - defaulted to PAIRING_SIZE in config.py
         whos_out (list): List of slack users who aren't available for the meeting
         force_create (Optional[bool]): If True, generate the meeting and write it to storage without asking if it should.
+        any_pair (Optional[bool]): If True, generate any pairing - regardless if it's happened in the past or not
 
     Returns:
         bool: True if successful, False otherwise.
@@ -54,14 +55,15 @@ def create_meetings(store, sc, size, whos_out, force_create=False):
             pairing.append(name)
             local_size -= 1
 
-        pairing = frozenset(pairing)
-        if pairing in previous_pairings and attempts <= max_attempts:
-            print('Generated already existing pair, going to try again ({} attempt(s) so far)'.format(attempts))
-            attempts += 1
-            continue
-        elif attempts > max_attempts:
-            print('Max randomizing attempts reached, Got to start over again!!!!')
-            return False
+        if not any_pair:
+            pairing = frozenset(pairing)
+            if pairing in previous_pairings and attempts <= max_attempts:
+                print('Generated already existing pair, going to try again ({} attempt(s) so far)'.format(attempts))
+                attempts += 1
+                continue
+            elif attempts > max_attempts:
+                print('Max randomizing attempts reached, Got to start over again!!!!')
+                return False
 
         # Store difference of names (remaining people to pair)
         names = [n for n in names if n in local_names]
@@ -145,9 +147,12 @@ def send_to_slack(pretty_attendees, pretty_whos_out, sc):
 def main(args):
     store, sc = initialize(update_everyone=True)
     try:
+        max_attempts, attempt = 100, 1
         success = False
         while not success:
-            success = create_meetings(store, sc, size=args.size, whos_out=args.whos_out, force_create=args.force_create)
+            success = create_meetings(store, sc, size=args.size, whos_out=args.whos_out,
+                                      force_create=args.force_create, any_pair=attempt > max_attempts)
+            attempt += 1
     finally:
         store.close()
 
