@@ -12,7 +12,7 @@ Screenshots
 
 **Meeting Pairings posted to Slack Channel**
 
-<img src="screenshots/meeting.png" alt="bagel time" width="350px" />
+<img src="screenshots/meeting.png" alt="bagel time" width="250px" />
 
 **Checking for Attendance**
 
