@@ -1,0 +1,7 @@
+# Python stuff
+*.pyc
+.venv
+
+# bagelbot stuff
+*.shelve
+config_private.py
