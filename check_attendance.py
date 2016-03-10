@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta
 
 from config import ATTENDANCE_TIME_LIMIT
-from utils import YES, NO, initialize
+from utils import YES, NO, initialize, nostdout
 
 
 def check_attendance(store, sc, users=None):
@@ -92,4 +92,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Check to see if any Slack members will be missing today's meeting.")
     parser.add_argument('--users', '-u', dest='users', metavar='P', nargs='+', required=False, default=[],
                         help="list of people to check in with (usernames only)")
-    main(parser.parse_args())
+    parser.add_argument('--from-cron', action='store_true')
+    args = parser.parse_args()
+
+    if args.from_cron:
+        with nostdout():
+            main(args)
+    else:
+        main(args)

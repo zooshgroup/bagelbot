@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import contextlib
 import sys
 import shelve
 
@@ -51,6 +52,30 @@ def open_store():
         instance
     """
     return shelve.open(SHELVE_FILE, writeback=True)
+
+
+class DummyFile(object):
+    """Used to silence print statments when scripts are ran from a cron.
+
+    Note:
+        http://stackoverflow.com/q/2828953/76267
+    """
+    def write(self, x): pass
+
+
+@contextlib.contextmanager
+def nostdout():
+    """A context used to silence print statements from any bot functions.
+
+    Used when a script is ran as `--from-cron`, that way no stdout is produced.
+
+    Note:
+        http://stackoverflow.com/q/2828953/76267
+    """
+    save_stdout = sys.stdout
+    sys.stdout = DummyFile()
+    yield
+    sys.stdout = save_stdout
 
 
 def update_everyone_from_slack(store, sc):

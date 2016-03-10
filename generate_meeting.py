@@ -5,7 +5,7 @@ import random
 from datetime import date
 
 from config import PAIRING_SIZE, SLACK_CHANNEL
-from utils import YES, NO, initialize
+from utils import YES, NO, initialize, nostdout
 
 
 def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=False):
@@ -165,4 +165,11 @@ if __name__ == '__main__':
     parser.add_argument('--size', '-s', dest='size', type=int, required=False, default=PAIRING_SIZE,
                         help="size of pairings (default set in config.py)")
     parser.add_argument('--force-create', action='store_true')
-    main(parser.parse_args())
+    parser.add_argument('--from-cron', action='store_true')
+    args = parser.parse_args()
+
+    if args.from_cron:
+        with nostdout():
+            main(args)
+    else:
+        main(args)
