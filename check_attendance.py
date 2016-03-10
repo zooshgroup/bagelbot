@@ -29,7 +29,7 @@ def check_attendance(store, sc, users=None):
             print("Pinging {}...".format(user))
             message = sc.api_call(
                 "chat.postMessage", channel='@' + user, as_user=True,
-                text="Will you be available today's ({:%m/%d/%Y}) :coffee: and :bagel: meeting? (yes/no)".format(todays_meeting['date'])
+                text="Will you be available for today's ({:%m/%d/%Y}) :coffee: and :bagel: meeting? (yes/no)".format(todays_meeting['date'])
             )
             message['user'] = user
             messages_sent[message['channel']] = message
@@ -44,18 +44,25 @@ def check_attendance(store, sc, users=None):
                     if not event.get('sub_type') == 'bot_message':
                         print(u"{} responded with '{}'".format(user, event['text']))
 
+                    user_responded = False
                     if lower_txt in YES:
+                        user_responded = True
                         todays_meeting['available'].append(user)
                         sc.api_call(
                             "chat.postMessage", channel=event['channel'], as_user=True,
                             text="Your presence has been acknowledged! Thank you! :tada:"
                         )
                     elif lower_txt in NO:
+                        user_responded = True
                         todays_meeting['out'].append(user)
                         sc.api_call(
                             "chat.postMessage", channel=event['channel'], as_user=True,
                             text="Your absence has been acknowledged! You will be missed! :cry:"
                         )
+
+                    if user_responded:
+                        # User has responded to bagelbot, don't listen to this channel anymore.
+                        messages_sent.pop(event['channel'])
 
             all_accounted_for = len(todays_meeting['available']) + len(todays_meeting['out']) == user_len
             if datetime.now() > (start + timedelta(seconds=ATTENDANCE_TIME_LIMIT)) or all_accounted_for:
