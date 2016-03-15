@@ -164,8 +164,10 @@ if __name__ == '__main__':
                         help="list of people to exclude in today's meetings (usernames only)")
     parser.add_argument('--size', '-s', dest='size', type=int, required=False, default=PAIRING_SIZE,
                         help="size of pairings (default set in config.py)")
-    parser.add_argument('--force-create', action='store_true')
-    parser.add_argument('--from-cron', action='store_true')
+    parser.add_argument('--force-create', action='store_true',
+                        help='Create random meetings without user confirmation.')
+    parser.add_argument('--from-cron', action='store_true',
+                        help='Silence all print statements (stdout).')
     args = parser.parse_args()
 
     if args.from_cron:

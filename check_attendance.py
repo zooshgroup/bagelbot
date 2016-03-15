@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import time
 from datetime import datetime, timedelta
 
@@ -6,7 +8,7 @@ from config import ATTENDANCE_TIME_LIMIT
 from utils import YES, NO, initialize, nostdout
 
 
-def check_attendance(store, sc, users=None):
+def check_attendance(store, sc, users=None, debug=False):
     """Pings all slack users with the email address stored in config.py.
 
     It asks if they are available for today's meeting, and waits for a pre-determined amount of time.
@@ -38,6 +40,9 @@ def check_attendance(store, sc, users=None):
         while True:
             events = sc.rtm_read()
             for event in events:
+                if debug:
+                    print(event)
+
                 if event['type'] == 'message' and event['channel'] in messages_sent and float(event['ts']) > float(messages_sent[event['channel']]['ts']):
                     lower_txt = event['text'].lower()
                     user = messages_sent[event['channel']]['user']
@@ -82,7 +87,7 @@ def check_attendance(store, sc, users=None):
 def main(args):
     store, sc = initialize(update_everyone=True)
     try:
-        check_attendance(store, sc, users=args.users)
+        check_attendance(store, sc, users=args.users, debug=args.debug)
     finally:
         store.close()
 
@@ -92,7 +97,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Check to see if any Slack members will be missing today's meeting.")
     parser.add_argument('--users', '-u', dest='users', metavar='P', nargs='+', required=False, default=[],
                         help="list of people to check in with (usernames only)")
-    parser.add_argument('--from-cron', action='store_true')
+    parser.add_argument('--from-cron', action='store_true',
+                        help='Silence all print statements (stdout).')
+    parser.add_argument('--debug', action='store_true',
+                        help='Print out all events bagelbot can see.')
     args = parser.parse_args()
 
     if args.from_cron:
