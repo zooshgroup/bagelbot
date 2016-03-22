@@ -46,7 +46,7 @@ def check_attendance(store, sc, users=None, debug=False):
                 if event['type'] == 'message' and event['channel'] in messages_sent and float(event['ts']) > float(messages_sent[event['channel']]['ts']):
                     lower_txt = event['text'].lower()
                     user = messages_sent[event['channel']]['user']
-                    print(u"{} responded with '{}'".format(user, event['text']))
+                    print("{} responded with '{}'".format(user, event['text'].encode('ascii', 'ignore')))
 
                     user_responded = False
                     if lower_txt in YES:
