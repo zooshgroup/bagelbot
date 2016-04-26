@@ -8,7 +8,7 @@ from config import PAIRING_SIZE, SLACK_CHANNEL
 from utils import YES, NO, initialize, nostdout
 
 
-def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=False):
+def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pair=False):
     """Randomly generates sets of pairs for (usually) 1 on 1 meetings for a Slack team.
 
     Given the `size`, list of all users and who is out today, it generates a randomized set of people
@@ -19,6 +19,7 @@ def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=Fals
         sc (SlackClient): An instance of SlackClient
         size (int): Pair size - defaulted to PAIRING_SIZE in config.py
         whos_out (list): List of slack users who aren't available for the meeting
+        pairs (list): List of slack users explictly pair up (elements of list are in the form of 'username+username')
         force_create (Optional[bool]): If True, generate the meeting and write it to storage without asking if it should.
         any_pair (Optional[bool]): If True, generate any pairing - regardless if it's happened in the past or not
 
@@ -27,9 +28,9 @@ def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=Fals
     """
     todays_meeting = {'date': date.today(), 'attendees': []}
     found_upcoming = False
-    if not whos_out and store.get('upcoming') and store['upcoming']['date'] == todays_meeting['date']:
-        print("No users marked as out, but found upcoming meeting, using whoever is listed as out from it.")
-        whos_out = store['upcoming']['out']
+    if store.get('upcoming') and store['upcoming']['date'] == todays_meeting['date']:
+        print("Found upcoming meeting, using appending whoever is listed as out from it.")
+        whos_out += store['upcoming']['out']
         found_upcoming = True
 
     names = [n for n in store['everyone'] if n not in whos_out]
@@ -42,6 +43,28 @@ def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=Fals
     nCr = (names_len * (names_len - 1)) / size
     previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']]
 
+    # == Handle Explicit Pairs ==
+    for explicit_pair in pairs:
+        local_size = size + out_remainder
+        local_names = names[:]
+        pairing = []
+
+        members = explicit_pair.split('+')
+        for member in members:
+            local_names.remove(member)
+            pairing.append(member)
+
+        if out_remainder and not len(pairing) % local_size:
+            # If this pair is divisible by the remainder, we've already taken care
+            # of the remainder with explicit pairs - don't mess with it when generating randos
+            out_remainder = 0
+
+        # Store difference of names (remaining people to pair)
+        names = [n for n in names if n in local_names]
+        todays_meeting['attendees'].append(pairing)
+        number_of_pairings -= 1
+
+    # == Handle Random Pairs ==
     attempts = 1
     max_attempts = 25
     while number_of_pairings:
@@ -72,12 +95,14 @@ def create_meetings(store, sc, size, whos_out, force_create=False, any_pair=Fals
         todays_meeting['attendees'].append(pairing)
         number_of_pairings -= 1
 
+    # == Print Pairs ==
     print('\n== Pairings for {:%m/%d/%Y} ==\n'.format(todays_meeting['date']))
     pretty_attendees = '\n'.join(format_attendees(pair, max_pair_size) for pair in todays_meeting['attendees'])
     print(pretty_attendees)
     pretty_whos_out = format_attendees([o[0] + '.' + o[1:] for o in whos_out], at=False)
     print("(Who's out: {})".format(pretty_whos_out))
 
+    # == Generate meeting and Save ==
     while True:
         if force_create:
             answer = 'yes'
@@ -150,8 +175,11 @@ def main(args):
         max_attempts, attempt = 100, 1
         success = False
         while not success:
-            success = create_meetings(store, sc, size=args.size, whos_out=args.whos_out,
-                                      force_create=args.force_create, any_pair=attempt > max_attempts)
+            success = create_meetings(store, sc, size=args.size,
+                                      whos_out=args.whos_out,
+                                      pairs=args.pairs,
+                                      force_create=args.force_create,
+                                      any_pair=attempt > max_attempts)
             attempt += 1
     finally:
         store.close()
@@ -162,6 +190,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Generate random Coffee & Bagel meetups to promote synergy!')
     parser.add_argument('--out', '-o', dest='whos_out', metavar='P', nargs='+', required=False, default=[],
                         help="list of people to exclude in today's meetings (usernames only)")
+    parser.add_argument('--pair', '-p', dest='pairs', metavar='P+J', nargs='+', required=False, default=[],
+                        help="list of username pairs (each pair is separated by space, format is username+username)"
+                        " to set explicitly in today's meetings (ex. --pair bill+susy). Any names outside this list will be"
+                        " paired randomly like usual.")
     parser.add_argument('--size', '-s', dest='size', type=int, required=False, default=PAIRING_SIZE,
                         help="size of pairings (default set in config.py)")
     parser.add_argument('--force-create', action='store_true',
