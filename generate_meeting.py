@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import random
+import sys
 from datetime import date
 
 from config import PAIRING_SIZE, SLACK_CHANNEL
@@ -44,25 +45,41 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']]
 
     # == Handle Explicit Pairs ==
-    for explicit_pair in pairs:
+    for index, explicit_pair in enumerate(pairs):
         local_size = size + out_remainder
         local_names = names[:]
         pairing = []
 
-        members = explicit_pair.split('+')
-        for member in members:
-            local_names.remove(member)
-            pairing.append(member)
+        try:
+            members = explicit_pair.split('+')
+            for member in members:
+                local_names.remove(member)
+                pairing.append(member)
+        except:
+            sys.exit("ERROR: The following explicit pair was either malformed, contained invalid user names, or has members listed as being out: {}".format(explicit_pair))
 
-        if out_remainder and not len(pairing) % local_size:
+        explicit_remainder = len(pairing) % local_size
+        if not index and out_remainder == explicit_remainder:
             # If this pair is divisible by the remainder, we've already taken care
             # of the remainder with explicit pairs - don't mess with it when generating randos
             out_remainder = 0
+        elif explicit_remainder < out_remainder:
+            # If we our current remainder is less than the original one,
+            # that means we'll generate at least one more pair that originally thought.
+            number_of_pairings += 1
+        elif explicit_remainder > out_remainder:
+            # If we our current remainder is greater than the original one,
+            # that means we'll generate at least one less pair that originally thought.
+            max_pair_size += 1
+            number_of_pairings -= 1
 
         # Store difference of names (remaining people to pair)
         names = [n for n in names if n in local_names]
         todays_meeting['attendees'].append(pairing)
         number_of_pairings -= 1
+
+    # Reset the proper remainder after creating the explicit groups
+    out_remainder = len(names) % size
 
     # == Handle Random Pairs ==
     attempts = 1
@@ -101,6 +118,9 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     print(pretty_attendees)
     pretty_whos_out = format_attendees([o[0] + '.' + o[1:] for o in whos_out], at=False)
     print("(Who's out: {})".format(pretty_whos_out))
+    if names:
+        # names should be empty if everyone is paired.
+        sys.exit("\n ERROR: These people were not paired: {}".format(', '.join(names)))
 
     # == Generate meeting and Save ==
     while True:
