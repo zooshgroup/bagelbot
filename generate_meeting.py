@@ -35,18 +35,10 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
         found_upcoming = True
 
     names = [n for n in store['everyone'] if n not in whos_out]
-    names_len = len(names)
-    number_of_pairings = names_len / size
-    out_remainder = names_len % size
-    max_pair_size = size + out_remainder + 1
-    print("Going to generate {} pairs for today's meeting...".format(number_of_pairings))
-    # Get the nCr of meetings and try not to repeat a pairing
-    nCr = (names_len * (names_len - 1)) / size
-    previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']]
+    max_pair_size = size
 
     # == Handle Explicit Pairs ==
     for index, explicit_pair in enumerate(pairs):
-        local_size = size + out_remainder
         local_names = names[:]
         pairing = []
 
@@ -58,28 +50,20 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
         except:
             sys.exit("ERROR: The following explicit pair was either malformed, contained invalid user names, or has members listed as being out: {}".format(explicit_pair))
 
-        explicit_remainder = len(pairing) % local_size
-        if not index and out_remainder == explicit_remainder:
-            # If this pair is divisible by the remainder, we've already taken care
-            # of the remainder with explicit pairs - don't mess with it when generating randos
-            out_remainder = 0
-        elif explicit_remainder < out_remainder:
-            # If we our current remainder is less than the original one,
-            # that means we'll generate at least one more pair that originally thought.
-            number_of_pairings += 1
-        elif explicit_remainder > out_remainder:
-            # If we our current remainder is greater than the original one,
-            # that means we'll generate at least one less pair that originally thought.
-            max_pair_size += 1
-            number_of_pairings -= 1
-
         # Store difference of names (remaining people to pair)
+        max_pair_size = max(max_pair_size, len(pairing))
         names = [n for n in names if n in local_names]
         todays_meeting['attendees'].append(pairing)
-        number_of_pairings -= 1
 
-    # Reset the proper remainder after creating the explicit groups
-    out_remainder = len(names) % size
+    # == Set up Random Pairing Numbers ==
+    names_len = len(names)
+    number_of_pairings = names_len / size
+    out_remainder = names_len % size
+    max_pair_size = max(max_pair_size, names_len + out_remainder + 1)
+    print("Going to generate {} pairs for today's meeting...".format(number_of_pairings))
+    # Get the nCr of meetings and try not to repeat a pairing
+    nCr = (names_len * (names_len - 1)) / size
+    previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']]
 
     # == Handle Random Pairs ==
     attempts = 1
