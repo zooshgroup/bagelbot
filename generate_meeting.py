@@ -53,7 +53,7 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
         # Store difference of names (remaining people to pair)
         max_pair_size = max(max_pair_size, len(pairing))
         names = [n for n in names if n in local_names]
-        todays_meeting['attendees'].append(pairing)
+        todays_meeting['attendees'].append(frozenset(pairing))
 
     # == Set up Random Pairing Numbers ==
     names_len = len(names)
