@@ -57,6 +57,13 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
 
     # == Set up Random Pairing Numbers ==
     names_len = len(names)
+    if names_len < 2:
+        if found_upcoming:
+            del store['upcoming']
+        sc.api_call("chat.postMessage", channel=SLACK_CHANNEL, as_user=True,
+                    text="Today's :coffee: and :bagel: has been canceled - not enough people are available!")
+        sys.exit("ERROR: Not enough people to have a meeting, canceling request.")
+
     number_of_pairings = names_len / size
     out_remainder = names_len % size
     max_pair_size = max(max_pair_size, names_len + out_remainder + 1)
@@ -152,7 +159,7 @@ def format_attendees(l, t=5, at=True):
     elif length == t:
         return ", ".join(l[:-1]) + " & 1 other"
     else:
-        return ", ".join(l[:t-1]) + " & {} others".format(length - (t - 1))
+        return ", ".join(l[:t - 1]) + " & {} others".format(length - (t - 1))
 
 
 def send_to_slack(pretty_attendees, pretty_whos_out, sc):
