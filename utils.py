@@ -8,8 +8,8 @@ from slackclient import SlackClient
 
 from config import EMAIL_DOMAIN, SLACK_TOKEN, SHELVE_FILE
 
-YES = frozenset(['yes','y', 'ye', ''])
-NO = frozenset(['no','n'])
+YES = frozenset(['yes', 'y', 'ye', ''])
+NO = frozenset(['no', 'n'])
 
 
 def get_slack_client():
@@ -60,7 +60,8 @@ class DummyFile(object):
     Note:
         http://stackoverflow.com/q/2828953/76267
     """
-    def write(self, x): pass
+    def write(self, x):
+        pass
 
 
 @contextlib.contextmanager
@@ -93,5 +94,6 @@ def update_everyone_from_slack(store, sc):
 
     users = sc.api_call("users.list")
     store['everyone'] = [m['name'] for m in users['members']
-                         if not m['deleted'] and m['profile'].get('email')
-                         and m['profile']['email'].endswith('@' + EMAIL_DOMAIN)]
+                         if not m['deleted'] and
+                         m['profile'].get('email') and
+                         m['profile']['email'].endswith('@' + EMAIL_DOMAIN)]
