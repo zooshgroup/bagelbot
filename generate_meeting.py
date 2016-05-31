@@ -31,7 +31,7 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     found_upcoming = False
     if store.get('upcoming') and store['upcoming']['date'] == todays_meeting['date']:
         print("Found upcoming meeting, using appending whoever is listed as out from it.")
-        whos_out += store['upcoming']['out']
+        whos_out = whos_out + store['upcoming']['out']
         found_upcoming = True
 
     names = [n for n in store['everyone'] if n not in whos_out]
