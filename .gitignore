@@ -1,6 +1,6 @@
 # Python stuff
 *.pyc
-.venv
+env
 
 # bagelbot stuff
 *.shelve
