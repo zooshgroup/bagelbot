@@ -1,3 +1,2 @@
 -r requirements.txt
-pudb==2016.1
 ipython==4.1.2

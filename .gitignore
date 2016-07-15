@@ -4,4 +4,5 @@ env
 
 # bagelbot stuff
 *.shelve
+*.shelve.*
 config_private.py

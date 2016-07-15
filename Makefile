@@ -25,14 +25,11 @@ help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
 	@echo "clean-build - remove build artifacts"
 	@echo "clean-pyc - remove Python file artifacts"
-	@echo "clean-test - remove test and coverage artifacts"
 	@echo "lint - check style with flake8"
-	@echo "test - run tests quickly with the default Python"
-	@echo "coverage - check code coverage quickly with the default Python"
 	@echo "install - install bagelbot's dependencies to the active Python's site-packages"
 	@echo "install-dev - install bagelbot's dependencies to the active Python's site-packages plus debug tools for local development"
 
-clean: clean-build clean-pyc clean-test
+clean: clean-build clean-pyc
 
 clean-build:
 	$(RM) env
@@ -48,16 +45,9 @@ clean-pyc:
 	$(FIND) . -name '*~' -exec rm -f {} +
 	$(FIND) . -name '__pycache__' -exec rm -fr {} +
 
-clean-test:
-	$(RM) .coverage
-	$(RM) htmlcov
-
 install: clean
 	virtualenv env
 	$(ENV)pip install --upgrade -r requirements.txt
-
-install-codeship: install
-	$(ENV)pip install coverage
 
 install-dev: clean
 	virtualenv env
@@ -65,16 +55,3 @@ install-dev: clean
 
 lint:
 	$(ENV)flake8 --max-complexity=10 *.py
-
-test:
-	$(ENV)python tests/test_*.py
-
-coverage:
-	$(ENV)coverage run --branch --source *.py
-	$(ENV)coverage report -m
-	$(ENV)coverage html
-	$(BROWSER) htmlcov/index.html
-
-coverage-codeship:
-	$(ENV)coverage run --branch --source main.py,platforms tests/test_*.py
-	$(ENV)coverage report -m --fail-under 100
