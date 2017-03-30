@@ -64,7 +64,7 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
 
     # == Set up Random Pairing Numbers ==
     names_len = len(names)
-    if names_len < 2:
+    if names_len < size:
         if found_upcoming:
             del store['upcoming']
         sc.api_call("chat.postMessage", channel=SLACK_CHANNEL, as_user=True,
