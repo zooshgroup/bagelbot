@@ -6,6 +6,7 @@ SLACK_CHANNEL = "#general"
 SHELVE_FILE = "meetings.shelve"
 ATTENDANCE_TIME_LIMIT = 60 * 15
 PAIRING_SIZE = 2
+GOOGLE_HANGOUT_URL = "https://hangouts.google.com/hangouts/_/"
 
 if os.path.exists('config_private.py'):
     # Use config_private for your own personal settings - default to be git ignored.

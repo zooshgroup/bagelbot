@@ -4,9 +4,14 @@ from __future__ import print_function
 import random
 import sys
 from datetime import date
+from uuid import uuid4
 
-from config import PAIRING_SIZE, SLACK_CHANNEL
+from config import GOOGLE_HANGOUT_URL, PAIRING_SIZE, SLACK_CHANNEL
 from utils import YES, NO, initialize, nostdout
+
+
+def get_google_hangout_url():
+    return "{}{}?authuser=0".format(GOOGLE_HANGOUT_URL, uuid4())
 
 
 def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pair=False):
@@ -64,12 +69,12 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
                     text="Today's :coffee: and :bagel: has been canceled - not enough people are available!")
         sys.exit("ERROR: Not enough people to have a meeting, canceling request.")
 
-    number_of_pairings = names_len / size
+    number_of_pairings = names_len // size
     out_remainder = names_len % size
     max_pair_size = max(max_pair_size, names_len + out_remainder + 1)
     print("Going to generate {} pairs for today's meeting...".format(number_of_pairings))
     # Get the nCr of meetings and try not to repeat a pairing
-    nCr = (names_len * (names_len - 1)) / size
+    nCr = (names_len * (names_len - 1)) // size
     previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']] if 'history' in store else []
 
     # == Handle Random Pairs ==
@@ -137,7 +142,8 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
 
 
 def format_attendees(l, t=5, at=True):
-    """Auxiliary function to format a list of names into proper English.
+    """Auxiliary function to format a list of names into proper English. It also appends
+    a random google hangout URL at the end of '@' mentioned attendees.
 
     Args:
         l (list): A list of strings (names)
@@ -153,13 +159,15 @@ def format_attendees(l, t=5, at=True):
     length = len(l)
     l = [('@' if at else '') + k for k in l]
     if length <= 2:
-        return " & ".join(l)
+        att = " & ".join(l)
     elif length < t:
-        return ", ".join(l[:-1]) + " & " + l[-1]
+        att = ", ".join(l[:-1]) + " & " + l[-1]
     elif length == t:
-        return ", ".join(l[:-1]) + " & 1 other"
+        att = ", ".join(l[:-1]) + " & 1 other"
     else:
-        return ", ".join(l[:t - 1]) + " & {} others".format(length - (t - 1))
+        att = ", ".join(l[:t - 1]) + " & {} others".format(length - (t - 1))
+
+    return att + " - " + get_google_hangout_url() if at else att
 
 
 def send_to_slack(pretty_attendees, pretty_whos_out, sc):
