@@ -70,7 +70,7 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     print("Going to generate {} pairs for today's meeting...".format(number_of_pairings))
     # Get the nCr of meetings and try not to repeat a pairing
     nCr = (names_len * (names_len - 1)) / size
-    previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']]
+    previous_pairings = [set(pair) for p in store['history'][-nCr:] for pair in p['attendees']] if 'history' in store else []
 
     # == Handle Random Pairs ==
     attempts = 1
@@ -118,7 +118,7 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
         if force_create:
             answer = 'yes'
         else:
-            answer = raw_input('\nAccept and write to shelf storage? (y/n) ').lower()
+            answer = input('\nAccept and write to shelf storage? (y/n) ').lower()
 
         if answer in YES:
             if found_upcoming:
