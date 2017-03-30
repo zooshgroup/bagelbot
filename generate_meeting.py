@@ -83,7 +83,19 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     attempts = 1
     max_attempts = 25
     while number_of_pairings:
-        local_size = size + out_remainder
+        # Only add an extra person per group unless at the last pair,
+        # then clear out all remaining people into the last group.
+        if out_remainder > 0 and number_of_pairings:
+            if number_of_pairings > 1:
+                remainder = 1
+                out_remainder -= 1
+            else:
+                remainder = out_remainder
+                out_remainder = 0
+        else:
+            remainder = 0
+
+        local_size = size + remainder
         local_names = names[:]
         pairing = []
 
@@ -105,8 +117,6 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
 
         # Store difference of names (remaining people to pair)
         names = [n for n in names if n in local_names]
-        # Remainder should be dealt with at this point, set to zero
-        out_remainder = 0
         todays_meeting['attendees'].append(pairing)
         number_of_pairings -= 1
 
