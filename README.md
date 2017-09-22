@@ -52,3 +52,10 @@ Use the `-h` option for optional arguments. If you want to schedule this job in 
 1. Run `check_attendance.py` ahead of your meeting (the default time limit on the attendance check is 15 minutes). This script will run for the entirety of that time limit listed in `config.py` or as soon as all Slack users have responded.
 
 2. After that time limit, say 15 minutes later, schedule `generate_meeting.py` to run. If there's an `upcoming` meeting in the shelf storage, and the `--force-create` option is passed, a meeting will be generated, sent out to the configured slack channel, and stored into the `history` key (a list of past meetings) of the shelf.
+
+Development
+------------
+
+1. There is a Makefile provided that uses [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) to manage a python 2.7.12 virtual environment. If you have pyenv & pyenv-virtualenv installed properly (refer to their respective readme's), then you just need to run:
+
+        make install-dev

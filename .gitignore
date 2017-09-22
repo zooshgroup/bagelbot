@@ -1,7 +1,5 @@
-# Python stuff
+# Python
 *.pyc
-env
-
 # bagelbot stuff
 *.shelve
 *.shelve.*

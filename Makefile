@@ -12,13 +12,11 @@ export BROWSER_PYSCRIPT
 BROWSER := python -c "$$BROWSER_PYSCRIPT"
 
 ifeq ($(OS),Windows_NT)
-    RM := "rm" -rf
-    FIND := "C:\Program Files\Git\usr\bin\find.exe"
-    ENV := env\Scripts\\
+		RM := "rm" -rf
+		FIND := "C:\Program Files\Git\usr\bin\find.exe"
 else
-    ENV := env/bin/
-    RM := rm -rf
-    FIND := find
+		RM := rm -rf
+		FIND := find
 endif
 
 help:
@@ -32,7 +30,7 @@ help:
 clean: clean-build clean-pyc
 
 clean-build:
-	$(RM) env
+	pyenv uninstall -f bagelbot
 	$(RM) build
 	$(RM) dist
 	$(RM) .eggs
@@ -46,12 +44,12 @@ clean-pyc:
 	$(FIND) . -name '__pycache__' -exec rm -fr {} +
 
 install: clean
-	virtualenv env
-	$(ENV)pip install --upgrade -r requirements.txt
+	pyenv virtualenv 2.7.12 bagelbot
+	pip install --upgrade -r requirements.txt
 
 install-dev: clean
-	virtualenv env
-	$(ENV)pip install --upgrade -r requirements_dev.txt
+	pyenv virtualenv 2.7.12 bagelbot
+	pip install --upgrade -r requirements_dev.txt
 
 lint:
-	$(ENV)flake8 --max-complexity=10 *.py
+	pylint *.py

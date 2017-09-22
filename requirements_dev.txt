@@ -1,5 +1,4 @@
 -r requirements.txt
-ipython==4.1.2
-flake8==3.0.4
-pylint==1.6.1
-pudb==2016.2
+pylint
+ipython
+pudb
