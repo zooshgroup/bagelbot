@@ -60,6 +60,7 @@ class DummyFile(object):
     Note:
         http://stackoverflow.com/q/2828953/76267
     """
+
     def write(self, x):
         pass
 
@@ -93,7 +94,7 @@ def update_everyone_from_slack(store, sc):
         sc = get_slack_client()
 
     users = sc.api_call("users.list")
-    store['everyone'] = [m['name'] for m in users['members']
-                         if not m['deleted'] and
-                         m['profile'].get('email') and
-                         m['profile']['email'].endswith('@' + EMAIL_DOMAIN)]
+    store['everyone'] = [
+        m['name'] for m in users['members'] if not m['deleted'] and m['profile'].get('email')
+        and m['profile']['email'].endswith('@' + EMAIL_DOMAIN)
+    ]

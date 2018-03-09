@@ -25,5 +25,6 @@ for meeting in history:
 for person, info in attendance.iteritems():
     print('=== {} ==='.format(person))
     print(' Total Attended: {}'.format(info['total']))
-    print(' Meeting Dates: {}'.format(', '.join(d.strftime('%m/%d/%Y') for d in sorted(info['dates']))))
+    print(' Meeting Dates: {}'.format(', '.join(
+        d.strftime('%m/%d/%Y') for d in sorted(info['dates']))))
     print()
