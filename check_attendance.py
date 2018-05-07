@@ -122,10 +122,10 @@ if __name__ == '__main__':
         '--from-cron', action='store_true', help='Silence all print statements (stdout).')
     parser.add_argument(
         '--debug', action='store_true', help='Print out all events bagelbot can see.')
-    args = parser.parse_args()
+    parsed_args = parser.parse_args()
 
-    if args.from_cron:
+    if parsed_args.from_cron:
         with nostdout():
-            main(args)
+            main(parsed_args)
     else:
-        main(args)
+        main(parsed_args)

@@ -44,11 +44,12 @@ clean-pyc:
 	$(FIND) . -name '__pycache__' -exec rm -fr {} +
 
 install: clean
-	pyenv virtualenv 2.7.12 bagelbot
+	pyenv install 3.6.5 || true
+	pyenv virtualenv 3.6.5 bagelbot
 	pip install --upgrade -r requirements.txt
 
 install-dev: clean
-	pyenv virtualenv 2.7.12 bagelbot
+	pyenv virtualenv 3.6.5 bagelbot
 	pip install --upgrade -r requirements_dev.txt
 
 lint:

@@ -45,7 +45,7 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     max_pair_size = size
 
     # == Handle Explicit Pairs ==
-    for index, explicit_pair in enumerate(pairs):
+    for _, explicit_pair in enumerate(pairs):
         local_names = names[:]
         pairing = []
 
@@ -276,10 +276,10 @@ if __name__ == '__main__':
         help='Create random meetings without user confirmation.')
     parser.add_argument(
         '--from-cron', action='store_true', help='Silence all print statements (stdout).')
-    args = parser.parse_args()
+    parsed_args = parser.parse_args()
 
-    if args.from_cron:
+    if parsed_args.from_cron:
         with nostdout():
-            main(args)
+            main(parsed_args)
     else:
-        main(args)
+        main(parsed_args)

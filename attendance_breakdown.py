@@ -3,10 +3,6 @@
 Simple script for generating some simple meeting attendance statistics
 using history of past meetings.
 """
-from __future__ import print_function
-
-from pprint import pprint
-
 from utils import open_store
 
 store = open_store()

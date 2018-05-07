@@ -56,6 +56,6 @@ Use the `-h` option for optional arguments. If you want to schedule this job in 
 Development
 ------------
 
-1. There is a Makefile provided that uses [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) to manage a python 2.7.12 virtual environment. If you have pyenv & pyenv-virtualenv installed properly (refer to their respective readme's), then you just need to run:
+1. There is a Makefile provided that uses [pyenv-virtualenv](https://github.com/pyenv/pyenv-virtualenv) to manage a python 3.6.5 virtual environment. If you have pyenv & pyenv-virtualenv installed properly (refer to their respective readme's), then you just need to run:
 
         make install-dev
