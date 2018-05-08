@@ -28,17 +28,28 @@ Dependencies
 Installation
 ------------
 
+There are a couple ways to run this project. First way, you can just check out the code and install a local virtualenv and run the scripts. The other is to use the provided Dockerfile to run commands.
+
 1. Download the bagelbot code
 
-        git clone git@github.com:beardedprojamz/bagelbot.git
-        cd bagelbot
+        $ git clone git@github.com:beardedprojamz/bagelbot.git
+        $ cd bagelbot
 
-2. Install dependencies ([virtualenv](http://virtualenv.readthedocs.org/en/latest/) is recommended.)
+2. Configure bagelbot by editing the `config.py` file accordingly (use your email domain, slack token, etc.)
 
-        pip install -r requirements.txt
+#### Local Development
 
-3. Configure bagelbot by editing the `config.py` file accordingly (use your email domain, slack token, etc.)
-  * You can also edit a file `config_private.py` which is a gitignore'd file but, if it exists, is used in place of config.py.
+Install dependencies ([virtualenv](http://virtualenv.readthedocs.org/en/latest/) is recommended.)
+
+``` shell
+$ pip install -r requirements.txt
+```
+
+#### Docker
+
+``` shell
+$ docker build -t bagelbot .
+```
 
 Running
 -------
@@ -52,6 +63,15 @@ Use the `-h` option for optional arguments. If you want to schedule this job in 
 1. Run `check_attendance.py` ahead of your meeting (the default time limit on the attendance check is 15 minutes). This script will run for the entirety of that time limit listed in `config.py` or as soon as all Slack users have responded.
 
 2. After that time limit, say 15 minutes later, schedule `generate_meeting.py` to run. If there's an `upcoming` meeting in the shelf storage, and the `--force-create` option is passed, a meeting will be generated, sent out to the configured slack channel, and stored into the `history` key (a list of past meetings) of the shelf.
+
+
+#### Docker
+
+You can run these commands locally like above, or using a docker image such as:
+
+``` shell
+$ docker run -it bagelbot python check_attendance.py -u ben
+```
 
 Development
 ------------
