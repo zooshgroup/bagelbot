@@ -67,10 +67,16 @@ Use the `-h` option for optional arguments. If you want to schedule this job in 
 
 #### Docker
 
-You can run these commands locally like above, or using a docker image such as:
+You can run the individual scripts locally like above, or using a docker image such as:
 
 ``` shell
 $ docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -it bagelbot python check_attendance.py --s3-sync --users ben
+```
+
+If you want to run Bagelbot as a Service (BaaS), you can use `service.py` to do so. This script checks to see if attendance should be checked at a certain time and the same with meeting generation. See `config.py` for an example of meeting times and frequencies. If `S3_BUCKET` is set, the `SHELVE_FILE` will be uploaded to S3 upon every operation that would change the state of the file.
+
+``` shell
+$ docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -it bagelbot
 ```
 
 Development

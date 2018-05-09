@@ -20,7 +20,13 @@ def get_google_hangout_url():
     return "{}{}?authuser=0".format(GOOGLE_HANGOUT_URL, uuid4())
 
 
-def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pair=False):
+def create_meetings(store,
+                    sc,
+                    size=PAIRING_SIZE,
+                    whos_out=None,
+                    pairs=None,
+                    force_create=False,
+                    any_pair=False):
     """Randomly generates sets of pairs for (usually) 1 on 1 meetings for a Slack team.
 
     Given the `size`, list of all users and who is out today, it generates a randomized set of people
@@ -38,6 +44,11 @@ def create_meetings(store, sc, size, whos_out, pairs, force_create=False, any_pa
     Returns:
         bool: True if successful, False otherwise.
     """
+    if whos_out is None:
+        whos_out = []
+    if pairs is None:
+        pairs = []
+
     todays_meeting = {'date': date.today(), 'attendees': []}
     found_upcoming = False
     if store.get('upcoming') and store['upcoming']['date'] == todays_meeting['date']:

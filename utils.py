@@ -61,14 +61,16 @@ def download_shelve_from_s3():
     """Download the SHELVE_FILE from S3_BUCKET & S3_PREFIX.
     """
     s3 = boto3.resource('s3')
-    s3.meta.client.download_file(S3_BUCKET, os.path.join(S3_PREFIX, SHELVE_FILE), SHELVE_FILE)
+    key = os.path.join(S3_PREFIX, SHELVE_FILE) if S3_PREFIX else SHELVE_FILE
+    s3.meta.client.download_file(S3_BUCKET, key, SHELVE_FILE)
 
 
 def upload_shelve_to_s3():
     """Upload the SHELVE_FILE to S3_BUCKET & S3_PREFIX.
     """
     s3 = boto3.resource('s3')
-    s3.meta.client.upload_file(SHELVE_FILE, S3_BUCKET, os.path.join(S3_PREFIX, SHELVE_FILE))
+    key = os.path.join(S3_PREFIX, SHELVE_FILE) if S3_PREFIX else SHELVE_FILE
+    s3.meta.client.upload_file(SHELVE_FILE, S3_BUCKET, key)
 
 
 class DummyFile(object):

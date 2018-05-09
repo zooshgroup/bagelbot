@@ -7,5 +7,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Drop to cli
-CMD [ "/bin/bash" ]
+# Start Bagelbot as a Service (BaaS)
+CMD [ "python", "service.py" ]
