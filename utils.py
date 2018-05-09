@@ -1,10 +1,15 @@
+"""
+Bagelbot utility functions used by the different scripts.
+"""
 import contextlib
+import os
 import sys
 import shelve
 
+import boto3
 from slackclient import SlackClient
 
-from config import EMAIL_DOMAIN, SLACK_TOKEN, SHELVE_FILE
+from config import EMAIL_DOMAIN, S3_BUCKET, S3_PREFIX, SLACK_TOKEN, SHELVE_FILE
 
 YES = frozenset(['yes', 'y', 'ye', ''])
 NO = frozenset(['no', 'n'])
@@ -17,7 +22,7 @@ def get_slack_client():
         It pulls the required Slack API token from config.py
 
     Returns:
-        SlackClient instance
+        sc: A SlackClient instance
     """
     if not SLACK_TOKEN or SLACK_TOKEN == 'yourtoken':
         sys.exit('Exiting... SLACK_TOKEN was empty or not updated from the default in config.py.')
@@ -47,9 +52,23 @@ def open_store():
     """Open the SHELVE_FILE and return an open shelf instance.
 
     Returns:
-        instance
+        store: A shelve instance
     """
     return shelve.open(SHELVE_FILE, writeback=True)
+
+
+def download_shelve_from_s3():
+    """Download the SHELVE_FILE from S3_BUCKET & S3_PREFIX.
+    """
+    s3 = boto3.resource('s3')
+    s3.meta.client.download_file(S3_BUCKET, os.path.join(S3_PREFIX, SHELVE_FILE), SHELVE_FILE)
+
+
+def upload_shelve_to_s3():
+    """Upload the SHELVE_FILE to S3_BUCKET & S3_PREFIX.
+    """
+    s3 = boto3.resource('s3')
+    s3.meta.client.upload_file(SHELVE_FILE, S3_BUCKET, os.path.join(S3_PREFIX, SHELVE_FILE))
 
 
 class DummyFile(object):

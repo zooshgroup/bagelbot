@@ -70,7 +70,7 @@ Use the `-h` option for optional arguments. If you want to schedule this job in 
 You can run these commands locally like above, or using a docker image such as:
 
 ``` shell
-$ docker run -it bagelbot python check_attendance.py -u ben
+$ docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -it bagelbot python check_attendance.py --s3-sync --users ben
 ```
 
 Development

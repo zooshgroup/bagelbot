@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+"""
+Bagelbot script for generating an upcoming bagelbot meeting.
+"""
+
 from __future__ import print_function
 
 import random
@@ -9,7 +13,7 @@ from uuid import uuid4
 from six.moves import input
 
 from config import GOOGLE_HANGOUT_URL, PAIRING_SIZE, SLACK_CHANNEL
-from utils import YES, NO, initialize, nostdout
+from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
 
 def get_google_hangout_url():
@@ -220,6 +224,16 @@ def send_to_slack(pretty_attendees, pretty_whos_out, sc):
 
 
 def main(args):
+    """
+    Initialize the shelf, possibly sync to s3, then generate a meeting, close
+    the shelf and maybe sync the shelf again.
+
+    Args:
+        args (ArgumentParser args): Parsed arguments that impact how the generate_meeting runs
+    """
+    if args.s3_sync:
+        download_shelve_from_s3()
+
     store, sc = initialize(update_everyone=True)
     try:
         max_attempts, attempt = 100, 1
@@ -236,6 +250,8 @@ def main(args):
             attempt += 1
     finally:
         store.close()
+        if args.s3_sync:
+            upload_shelve_to_s3()
 
 
 if __name__ == '__main__':
@@ -276,6 +292,10 @@ if __name__ == '__main__':
         help='Create random meetings without user confirmation.')
     parser.add_argument(
         '--from-cron', action='store_true', help='Silence all print statements (stdout).')
+    parser.add_argument(
+        '--s3-sync',
+        action='store_true',
+        help='Synchronize SHELVE_FILE with AWS S3 before and after checking attendance.')
     parsed_args = parser.parse_args()
 
     if parsed_args.from_cron:

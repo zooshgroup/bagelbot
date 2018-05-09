@@ -1,11 +1,15 @@
 #!/usr/bin/env python
+"""
+Bagelbot script for checking for attendance for an upcoming bagelbot meeting.
+"""
+
 from __future__ import print_function
 
 import time
 from datetime import datetime, timedelta
 
 from config import ATTENDANCE_TIME_LIMIT
-from utils import YES, NO, initialize, nostdout
+from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
 
 def check_attendance(store, sc, users=None, debug=False):
@@ -18,6 +22,8 @@ def check_attendance(store, sc, users=None, debug=False):
     Args:
         store (instance): A persistent, dictionary-like object used to keep information about past/future meetings
         sc (SlackClient): An instance of SlackClient
+        users (list): A list of users to ping for role call (overrides store['everyone'])
+        debug (bool): Print out some more debug information if True
     """
     start = datetime.now()
     todays_meeting = {'date': start.date(), 'available': [], 'out': []}
@@ -98,11 +104,23 @@ def check_attendance(store, sc, users=None, debug=False):
 
 
 def main(args):
+    """
+    Initialize the shelf, possibly sync to s3, then check attendance, close
+    the shelf and maybe sync the shelf again.
+
+    Args:
+        args (ArgumentParser args): Parsed arguments that impact how the check_attandance runs
+    """
+    if args.s3_sync:
+        download_shelve_from_s3()
+
     store, sc = initialize(update_everyone=True)
     try:
         check_attendance(store, sc, users=args.users, debug=args.debug)
     finally:
         store.close()
+        if args.s3_sync:
+            upload_shelve_to_s3()
 
 
 if __name__ == '__main__':
@@ -119,9 +137,14 @@ if __name__ == '__main__':
         default=[],
         help="list of people to check in with (usernames only)")
     parser.add_argument(
-        '--from-cron', action='store_true', help='Silence all print statements (stdout).')
+        '--from-cron', '-c', action='store_true', help='Silence all print statements (stdout).')
     parser.add_argument(
-        '--debug', action='store_true', help='Print out all events bagelbot can see.')
+        '--debug', '-d', action='store_true', help='Print out all events bagelbot can see.')
+    parser.add_argument(
+        '--s3-sync',
+        '-s',
+        action='store_true',
+        help='Synchronize SHELVE_FILE with AWS S3 before and after checking attendance.')
     parsed_args = parser.parse_args()
 
     if parsed_args.from_cron:
