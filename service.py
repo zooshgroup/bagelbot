@@ -10,7 +10,8 @@ from pytz import timezone
 from config import ATTENDANCE_TIME, FREQUENCY, MEETING_TIME, S3_BUCKET, TIMEZONE
 from check_attendance import check_attendance
 from generate_meeting import create_meetings
-from utils import initialize, download_shelve_from_s3, upload_shelve_to_s3
+from utils import (initialize, download_shelve_from_s3, update_everyone_from_slack,
+                   upload_shelve_to_s3)
 
 
 def main():
@@ -52,10 +53,12 @@ def main():
             sync = False
             if attendance_time:
                 print("Gonna check that attendance!")
+                update_everyone_from_slack(store, sc)
                 check_attendance(store, sc)
                 sync = True
             elif meeting_time:
                 print("Let's try to generate a meeting!")
+                update_everyone_from_slack(store, sc)
                 max_attempts, attempt = 100, 1
                 success = False
                 while not success:
