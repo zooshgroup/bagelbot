@@ -31,7 +31,7 @@ def main():
     try:
         while True:
             # Get current time, and date of our last meeting
-            now = tz.localize(datetime.now())
+            now = datetime.now(tz)
             print("It's now {},".format(now))
             last_meeting = store['history'][-1]
             print("and the last meeting was on {}.".format(last_meeting['date']))
