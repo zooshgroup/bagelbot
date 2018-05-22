@@ -2,9 +2,6 @@
 """
 Bagelbot script for checking for attendance for an upcoming bagelbot meeting.
 """
-
-from __future__ import print_function
-
 import time
 from datetime import datetime, timedelta
 

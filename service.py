@@ -2,6 +2,8 @@
 """
 Bagelbot script that is designed to run constantly and check to see if role call should be ran and then if a meeting should be generated.
 """
+import logging
+import sys
 import time
 from datetime import datetime
 
@@ -12,6 +14,9 @@ from check_attendance import check_attendance
 from generate_meeting import create_meetings
 from utils import (initialize, download_shelve_from_s3, update_everyone_from_slack,
                    upload_shelve_to_s3)
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+DATE_FMT = "%m/%d/%Y"
 
 
 def main():
@@ -32,32 +37,32 @@ def main():
         while True:
             # Get current time, and date of our last meeting
             now = datetime.now(tz)
-            print("It's now {},".format(now))
+            logging.info("It's now %s,", now.strftime(DATE_FMT))
             last_meeting = store['history'][-1]
-            print("and the last meeting was on {}.".format(last_meeting['date']))
+            logging.info("and the last meeting was on %s.", last_meeting['date'].strftime(DATE_FMT))
 
             # Determine if it's time to check attendance
             attendance_time = all([(now.date() - last_meeting['date']) >= FREQUENCY,
                                    now.hour == ATTENDANCE_TIME['hour'],
                                    now.minute == ATTENDANCE_TIME['minute'],
                                    now.weekday() == ATTENDANCE_TIME['weekday']])
-            print("Is it attendance checking time? {}".format(attendance_time))
+            logging.info("Is it attendance checking time? %s", attendance_time)
 
             # Determine if it's time for a new meeting
             meeting_time = all([(now.date() - last_meeting['date']) >= FREQUENCY,
                                 now.hour == MEETING_TIME['hour'],
                                 now.minute == MEETING_TIME['minute'],
                                 now.weekday() == MEETING_TIME['weekday']])
-            print("Is it meeting generating time? {}".format(meeting_time))
+            logging.info("Is it meeting generating time? %s", meeting_time)
 
             sync = False
             if attendance_time:
-                print("Gonna check that attendance!")
+                logging.info("Gonna check that attendance!")
                 update_everyone_from_slack(store, sc)
                 check_attendance(store, sc)
                 sync = True
             elif meeting_time:
-                print("Let's try to generate a meeting!")
+                logging.info("Let's try to generate a meeting!")
                 update_everyone_from_slack(store, sc)
                 max_attempts, attempt = 100, 1
                 success = False
@@ -68,14 +73,14 @@ def main():
                 sync = True
 
             if sync:
-                print("Syncing to local storage.")
+                logging.info("Syncing to local storage.")
                 store.sync()
                 if S3_BUCKET:
-                    print("Uploading to s3.")
+                    logging.info("Uploading to s3.")
                     upload_shelve_to_s3()
 
             # Go to sleep for a minute and check again
-            print("Going to sleep for a minute.")
+            logging.info("Going to sleep for a minute.")
             time.sleep(60)
     finally:
         store.close()
