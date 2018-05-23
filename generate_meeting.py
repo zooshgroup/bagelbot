@@ -8,8 +8,6 @@ import sys
 from datetime import date
 from uuid import uuid4
 
-from six.moves import input
-
 from config import GOOGLE_HANGOUT_URL, PAIRING_SIZE, SLACK_CHANNEL
 from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
