@@ -74,7 +74,7 @@ def upload_shelve_to_s3():
 
 
 class DummyFile(object):
-    """Used to silence print statments when scripts are ran from a cron.
+    """Used to silence stdout when scripts are ran from a cron.
 
     Note:
         http://stackoverflow.com/q/2828953/76267
@@ -86,7 +86,7 @@ class DummyFile(object):
 
 @contextlib.contextmanager
 def nostdout():
-    """A context used to silence print statements from any bot functions.
+    """A context used to silence stdout from any bot functions.
 
     Used when a script is ran as `--from-cron`, that way no stdout is produced.
 

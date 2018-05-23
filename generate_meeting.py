@@ -2,6 +2,7 @@
 """
 Bagelbot script for generating an upcoming bagelbot meeting.
 """
+import logging
 import random
 import sys
 from datetime import date
@@ -12,8 +13,11 @@ from six.moves import input
 from config import GOOGLE_HANGOUT_URL, PAIRING_SIZE, SLACK_CHANNEL
 from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+
 
 def get_google_hangout_url():
+    """Get a Google Hangouts URL with a unique identifier appended."""
     return "{}{}?authuser=0".format(GOOGLE_HANGOUT_URL, uuid4())
 
 
@@ -49,7 +53,7 @@ def create_meetings(store,
     todays_meeting = {'date': date.today(), 'attendees': []}
     found_upcoming = False
     if store.get('upcoming') and store['upcoming']['date'] == todays_meeting['date']:
-        print("Found upcoming meeting, using appending whoever is listed as out from it.")
+        logging.info("Found upcoming meeting, using appending whoever is listed as out from it.")
         whos_out = whos_out + store['upcoming']['out']
         found_upcoming = True
 
@@ -92,7 +96,7 @@ def create_meetings(store,
     number_of_pairings = names_len // size
     out_remainder = names_len % size
     max_pair_size = max(max_pair_size, names_len + out_remainder + 1)
-    print("Going to generate {} pairs for today's meeting...".format(number_of_pairings))
+    logging.info("Going to generate %s pairs for today's meeting...", number_of_pairings)
     # Get the nCr of meetings and try not to repeat a pairing
     nCr = (names_len * (names_len - 1)) // size
     previous_pairings = [set(pair) for p in store['history'][-nCr:]
@@ -127,12 +131,13 @@ def create_meetings(store,
         if not any_pair:
             pairing = frozenset(pairing)
             if pairing in previous_pairings and attempts <= max_attempts:
-                print('Generated already existing pair, going to try again ({} attempt(s) so far)'.
-                      format(attempts))
+                logging.info(
+                    'Generated already existing pair, going to try again (%s attempt(s) so far)',
+                    attempts)
                 attempts += 1
                 continue
             elif attempts > max_attempts:
-                print('Max randomizing attempts reached, Got to start over again!!!!')
+                logging.warning('Max randomizing attempts reached, Got to start over again!!!!')
                 return False
 
         # Store difference of names (remaining people to pair)
@@ -140,13 +145,13 @@ def create_meetings(store,
         todays_meeting['attendees'].append(pairing)
         number_of_pairings -= 1
 
-    # == Print Pairs ==
-    print('\n== Pairings for {:%m/%d/%Y} ==\n'.format(todays_meeting['date']))
+    # == Log Pairs ==
+    logging.info('\n== Pairings for %s ==\n', todays_meeting['date'].strftime('%m/%d/%Y'))
     pretty_attendees = '\n'.join(
         format_attendees(pair, max_pair_size) for pair in todays_meeting['attendees'])
-    print(pretty_attendees)
+    logging.info(pretty_attendees)
     pretty_whos_out = format_attendees([o[0] + '.' + o[1:] for o in whos_out], at=False)
-    print("(Who's out: {})".format(pretty_whos_out))
+    logging.info("(Who's out: %s)", pretty_whos_out)
     if names:
         # names should be empty if everyone is paired.
         sys.exit("\n ERROR: These people were not paired: {}".format(', '.join(names)))
@@ -166,10 +171,10 @@ def create_meetings(store,
             send_to_slack(pretty_attendees, pretty_whos_out, sc)
             break
         elif answer in NO:
-            print("NOT saving these pairings.")
+            logging.info("NOT saving these pairings.")
             break
         else:
-            print("Please respond with 'yes' or 'no'")
+            logging.info("Please respond with 'yes' or 'no'")
 
     return True
 
@@ -228,7 +233,7 @@ def send_to_slack(pretty_attendees, pretty_whos_out, sc):
             channel=SLACK_CHANNEL,
             as_user=True,
             text="(Who's out: {})".format(pretty_whos_out))
-    print('Slack message posted to {}!'.format(SLACK_CHANNEL))
+    logging.info('Slack message posted to %s!', SLACK_CHANNEL)
 
 
 def main(args):
@@ -299,7 +304,7 @@ if __name__ == '__main__':
         action='store_true',
         help='Create random meetings without user confirmation.')
     parser.add_argument(
-        '--from-cron', action='store_true', help='Silence all print statements (stdout).')
+        '--from-cron', action='store_true', help='Silence all log statements (stdout).')
     parser.add_argument(
         '--s3-sync',
         action='store_true',

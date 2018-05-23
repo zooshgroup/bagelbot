@@ -15,7 +15,7 @@ from generate_meeting import create_meetings
 from utils import (initialize, download_shelve_from_s3, update_everyone_from_slack,
                    upload_shelve_to_s3)
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 DATE_FMT = "%m/%d/%Y"
 
 

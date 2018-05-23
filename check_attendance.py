@@ -2,6 +2,8 @@
 """
 Bagelbot script for checking for attendance for an upcoming bagelbot meeting.
 """
+import logging
+import sys
 import time
 from datetime import datetime, timedelta
 
@@ -9,7 +11,7 @@ from config import ATTENDANCE_TIME_LIMIT
 from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
 
-def check_attendance(store, sc, users=None, debug=False):
+def check_attendance(store, sc, users=None):
     """Pings all slack users with the email address stored in config.py.
 
     It asks if they are available for today's meeting, and waits for a pre-determined amount of time.
@@ -20,7 +22,6 @@ def check_attendance(store, sc, users=None, debug=False):
         store (instance): A persistent, dictionary-like object used to keep information about past/future meetings
         sc (SlackClient): An instance of SlackClient
         users (list): A list of users to ping for role call (overrides store['everyone'])
-        debug (bool): Print out some more debug information if True
     """
     start = datetime.now()
     todays_meeting = {'date': start.date(), 'available': [], 'out': []}
@@ -31,7 +32,7 @@ def check_attendance(store, sc, users=None, debug=False):
 
     if sc.rtm_connect():
         for user in users:
-            print("Pinging {}...".format(user))
+            logging.info("Pinging %s...", user)
             message = sc.api_call(
                 "chat.postMessage",
                 channel='@' + user,
@@ -42,19 +43,18 @@ def check_attendance(store, sc, users=None, debug=False):
             message['user'] = user
             messages_sent[message['channel']] = message
 
-        print("Waiting for responses...")
+        logging.info("Waiting for responses...")
         while True:
             events = sc.rtm_read()
             for event in events:
-                if debug:
-                    print(event)
+                logging.debug(event)
 
                 if event['type'] == 'message' and event['channel'] in messages_sent and float(
                         event['ts']) > float(messages_sent[event['channel']]['ts']):
                     lower_txt = event['text'].lower().strip()
                     user = messages_sent[event['channel']]['user']
-                    print("{} responded with '{}'".format(user, event['text'].encode(
-                        'ascii', 'ignore')))
+                    logging.info("%s responded with '%s'", user, event['text'].encode(
+                        'ascii', 'ignore'))
 
                     user_responded = False
                     if lower_txt in YES:
@@ -89,15 +89,15 @@ def check_attendance(store, sc, users=None, debug=False):
                         if u not in todays_meeting['available'] and u not in todays_meeting['out']
                     ]
 
-                print("Finished! These people aren't available today: {}".format(
-                    ', '.join(todays_meeting['out'])))
+                logging.info("Finished! These people aren't available today: %s", ', '.join(
+                    todays_meeting['out']))
                 # Store this upcoming meeting under a separate key for use by generate_meeting.py upon actual meeting generation.
                 store['upcoming'] = todays_meeting
                 break
             else:
                 time.sleep(1)
     else:
-        print("Connection Failed, invalid token?")
+        logging.info("Connection Failed, invalid token?")
 
 
 def main(args):
@@ -111,9 +111,14 @@ def main(args):
     if args.s3_sync:
         download_shelve_from_s3()
 
+    if args.debug:
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
+    else:
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+
     store, sc = initialize(update_everyone=True)
     try:
-        check_attendance(store, sc, users=args.users, debug=args.debug)
+        check_attendance(store, sc, users=args.users)
     finally:
         store.close()
         if args.s3_sync:
@@ -134,9 +139,9 @@ if __name__ == '__main__':
         default=[],
         help="list of people to check in with (usernames only)")
     parser.add_argument(
-        '--from-cron', '-c', action='store_true', help='Silence all print statements (stdout).')
+        '--from-cron', '-c', action='store_true', help='Silence all logging statements (stdout).')
     parser.add_argument(
-        '--debug', '-d', action='store_true', help='Print out all events bagelbot can see.')
+        '--debug', '-d', action='store_true', help='Log all events bagelbot can see.')
     parser.add_argument(
         '--s3-sync',
         '-s',
