@@ -12,10 +12,14 @@ from pytz import timezone
 from config import ATTENDANCE_TIME, FREQUENCY, MEETING_TIME, S3_BUCKET, TIMEZONE
 from check_attendance import check_attendance
 from generate_meeting import create_meetings
-from utils import (initialize, download_shelve_from_s3, update_everyone_from_slack,
-                   upload_shelve_to_s3)
+from utils import (
+    initialize,
+    download_shelve_from_s3,
+    update_everyone_from_slack,
+    upload_shelve_to_s3,
+)
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 DATE_FMT = "%m/%d/%Y"
 
 
@@ -38,21 +42,29 @@ def main():
             # Get current time, and date of our last meeting
             now = datetime.now(tz)
             logging.info("It's now %s,", now.strftime(DATE_FMT))
-            last_meeting = store['history'][-1]
-            logging.info("and the last meeting was on %s.", last_meeting['date'].strftime(DATE_FMT))
+            last_meeting = store["history"][-1]
+            logging.info("and the last meeting was on %s.", last_meeting["date"].strftime(DATE_FMT))
 
             # Determine if it's time to check attendance
-            attendance_time = all([(now.date() - last_meeting['date']) >= FREQUENCY,
-                                   now.hour == ATTENDANCE_TIME['hour'],
-                                   now.minute == ATTENDANCE_TIME['minute'],
-                                   now.weekday() == ATTENDANCE_TIME['weekday']])
+            attendance_time = all(
+                [
+                    (now.date() - last_meeting["date"]) >= FREQUENCY,
+                    now.hour == ATTENDANCE_TIME["hour"],
+                    now.minute == ATTENDANCE_TIME["minute"],
+                    now.weekday() == ATTENDANCE_TIME["weekday"],
+                ]
+            )
             logging.info("Is it attendance checking time? %s", attendance_time)
 
             # Determine if it's time for a new meeting
-            meeting_time = all([(now.date() - last_meeting['date']) >= FREQUENCY,
-                                now.hour == MEETING_TIME['hour'],
-                                now.minute == MEETING_TIME['minute'],
-                                now.weekday() == MEETING_TIME['weekday']])
+            meeting_time = all(
+                [
+                    (now.date() - last_meeting["date"]) >= FREQUENCY,
+                    now.hour == MEETING_TIME["hour"],
+                    now.minute == MEETING_TIME["minute"],
+                    now.weekday() == MEETING_TIME["weekday"],
+                ]
+            )
             logging.info("Is it meeting generating time? %s", meeting_time)
 
             sync = False
@@ -68,7 +80,8 @@ def main():
                 success = False
                 while not success:
                     success = create_meetings(
-                        store, sc, force_create=True, any_pair=attempt > max_attempts)
+                        store, sc, force_create=True, any_pair=attempt > max_attempts
+                    )
                     attempt += 1
                 sync = True
 
@@ -86,5 +99,5 @@ def main():
         store.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

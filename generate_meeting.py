@@ -11,7 +11,7 @@ from uuid import uuid4
 from config import GOOGLE_HANGOUT_URL, PAIRING_SIZE, SLACK_CHANNEL
 from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
 
 def get_google_hangout_url():
@@ -19,13 +19,9 @@ def get_google_hangout_url():
     return "{}{}?authuser=0".format(GOOGLE_HANGOUT_URL, uuid4())
 
 
-def create_meetings(store,
-                    sc,
-                    size=PAIRING_SIZE,
-                    whos_out=None,
-                    pairs=None,
-                    force_create=False,
-                    any_pair=False):
+def create_meetings(
+    store, sc, size=PAIRING_SIZE, whos_out=None, pairs=None, force_create=False, any_pair=False
+):
     """Randomly generates sets of pairs for (usually) 1 on 1 meetings for a Slack team.
 
     Given the `size`, list of all users and who is out today, it generates a randomized set of people
@@ -48,14 +44,14 @@ def create_meetings(store,
     if pairs is None:
         pairs = []
 
-    todays_meeting = {'date': date.today(), 'attendees': []}
+    todays_meeting = {"date": date.today(), "attendees": []}
     found_upcoming = False
-    if store.get('upcoming') and store['upcoming']['date'] == todays_meeting['date']:
+    if store.get("upcoming") and store["upcoming"]["date"] == todays_meeting["date"]:
         logging.info("Found upcoming meeting, using appending whoever is listed as out from it.")
-        whos_out = whos_out + store['upcoming']['out']
+        whos_out = whos_out + store["upcoming"]["out"]
         found_upcoming = True
 
-    names = [n for n in store['everyone'] if n not in whos_out]
+    names = [n for n in store["everyone"] if n not in whos_out]
     max_pair_size = size
 
     # == Handle Explicit Pairs ==
@@ -64,30 +60,32 @@ def create_meetings(store,
         pairing = []
 
         try:
-            members = explicit_pair.split('+')
+            members = explicit_pair.split("+")
             for member in members:
                 local_names.remove(member)
                 pairing.append(member)
         except:
             sys.exit(
-                "ERROR: The following explicit pair was either malformed, contained invalid user names, or has members listed as being out: {}".
-                format(explicit_pair))
+                "ERROR: The following explicit pair was either malformed, contained invalid user names, or has members listed as being out: {}".format(
+                    explicit_pair
+                )
+            )
 
         # Store difference of names (remaining people to pair)
         max_pair_size = max(max_pair_size, len(pairing))
         names = [n for n in names if n in local_names]
-        todays_meeting['attendees'].append(frozenset(pairing))
+        todays_meeting["attendees"].append(frozenset(pairing))
 
     # == Set up Random Pairing Numbers ==
     names_len = len(names)
     if names_len < size:
         if found_upcoming:
-            del store['upcoming']
+            del store["upcoming"]
         sc.api_call(
             "chat.postMessage",
             channel=SLACK_CHANNEL,
             as_user=True,
-            text="Today's :coffee: and :bagel: has been canceled - not enough people are available!"
+            text="Today's :coffee: and :bagel: has been canceled - not enough people are available!",
         )
         sys.exit("ERROR: Not enough people to have a meeting, canceling request.")
 
@@ -97,8 +95,11 @@ def create_meetings(store,
     logging.info("Going to generate %s pairs for today's meeting...", number_of_pairings)
     # Get the nCr of meetings and try not to repeat a pairing
     nCr = (names_len * (names_len - 1)) // size
-    previous_pairings = [set(pair) for p in store['history'][-nCr:]
-                         for pair in p['attendees']] if 'history' in store else []
+    previous_pairings = (
+        [set(pair) for p in store["history"][-nCr:] for pair in p["attendees"]]
+        if "history" in store
+        else []
+    )
 
     # == Handle Random Pairs ==
     attempts = 1
@@ -130,42 +131,44 @@ def create_meetings(store,
             pairing = frozenset(pairing)
             if pairing in previous_pairings and attempts <= max_attempts:
                 logging.info(
-                    'Generated already existing pair, going to try again (%s attempt(s) so far)',
-                    attempts)
+                    "Generated already existing pair, going to try again (%s attempt(s) so far)",
+                    attempts,
+                )
                 attempts += 1
                 continue
             elif attempts > max_attempts:
-                logging.warning('Max randomizing attempts reached, Got to start over again!!!!')
+                logging.warning("Max randomizing attempts reached, Got to start over again!!!!")
                 return False
 
         # Store difference of names (remaining people to pair)
         names = [n for n in names if n in local_names]
-        todays_meeting['attendees'].append(pairing)
+        todays_meeting["attendees"].append(pairing)
         number_of_pairings -= 1
 
     # == Log Pairs ==
-    logging.info('\n== Pairings for %s ==\n', todays_meeting['date'].strftime('%m/%d/%Y'))
-    pretty_attendees = '\n'.join(
-        format_attendees(pair, max_pair_size) for pair in todays_meeting['attendees'])
+    logging.info("\n== Pairings for %s ==\n", todays_meeting["date"].strftime("%m/%d/%Y"))
+    pretty_attendees = "\n".join(
+        format_attendees(pair, max_pair_size) for pair in todays_meeting["attendees"]
+    )
     logging.info(pretty_attendees)
-    pretty_whos_out = format_attendees([o[0] + '.' + o[1:] for o in whos_out], at=False)
+    pretty_whos_out = format_attendees([o[0] + "." + o[1:] for o in whos_out], at=False)
     logging.info("(Who's out: %s)", pretty_whos_out)
     if names:
         # names should be empty if everyone is paired.
-        sys.exit("\n ERROR: These people were not paired: {}".format(', '.join(names)))
+        sys.exit("\n ERROR: These people were not paired: {}".format(", ".join(names)))
 
     # == Generate meeting and Save ==
     while True:
         if force_create:
-            answer = 'yes'
+            answer = "yes"
         else:
-            answer = input('\nAccept and write to shelf storage? (y/n) ').lower()
+            answer = input("\nAccept and write to shelf storage? (y/n) ").lower()
 
         if answer in YES:
             if found_upcoming:
-                del store['upcoming']
+                del store["upcoming"]
 
-            store['history'].append(todays_meeting)
+            store["history"].append(todays_meeting)
             send_to_slack(pretty_attendees, pretty_whos_out, sc)
             break
         elif answer in NO:
@@ -193,7 +196,7 @@ def format_attendees(l, t=5, at=True):
         str: A list of names - such as @john, @susan, and @bill
     """
     length = len(l)
-    l = [('@' if at else '') + k for k in l]
+    l = [("@" if at else "") + k for k in l]
     if length <= 2:
         att = " & ".join(l)
     elif length < t:
@@ -201,7 +204,7 @@ def format_attendees(l, t=5, at=True):
     elif length == t:
         att = ", ".join(l[:-1]) + " & 1 other"
     else:
-        att = ", ".join(l[:t - 1]) + " & {} others".format(length - (t - 1))
+        att = ", ".join(l[: t - 1]) + " & {} others".format(length - (t - 1))
 
     return att + " - " + get_google_hangout_url() if at else att
 
@@ -218,20 +221,23 @@ def send_to_slack(pretty_attendees, pretty_whos_out, sc):
         "chat.postMessage",
         channel=SLACK_CHANNEL,
         as_user=True,
-        text="Today's :coffee: and :bagel: pairs are below!")
+        text="Today's :coffee: and :bagel: pairs are below!",
+    )
     sc.api_call(
         "chat.postMessage",
         channel=SLACK_CHANNEL,
         as_user=True,
         text=pretty_attendees,
-        link_names=True)
+        link_names=True,
+    )
     if pretty_whos_out:
         sc.api_call(
             "chat.postMessage",
             channel=SLACK_CHANNEL,
             as_user=True,
-            text="(Who's out: {})".format(pretty_whos_out))
-    logging.info('Slack message posted to %s!', SLACK_CHANNEL)
+            text="(Who's out: {})".format(pretty_whos_out),
+        )
+    logging.info("Slack message posted to %s!", SLACK_CHANNEL)
 
 
 def main(args):
@@ -257,7 +263,8 @@ def main(args):
                 whos_out=args.whos_out,
                 pairs=args.pairs,
                 force_create=args.force_create,
-                any_pair=attempt > max_attempts)
+                any_pair=attempt > max_attempts,
+            )
             attempt += 1
     finally:
         store.close()
@@ -265,48 +272,56 @@ def main(args):
             upload_shelve_to_s3()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(
-        description='Generate random Coffee & Bagel meetups to promote synergy!')
+        description="Generate random Coffee & Bagel meetups to promote synergy!"
+    )
     parser.add_argument(
-        '--out',
-        '-o',
-        dest='whos_out',
-        metavar='P',
-        nargs='+',
+        "--out",
+        "-o",
+        dest="whos_out",
+        metavar="P",
+        nargs="+",
         required=False,
         default=[],
-        help="list of people to exclude in today's meetings (usernames only)")
+        help="list of people to exclude in today's meetings (usernames only)",
+    )
     parser.add_argument(
-        '--pair',
-        '-p',
-        dest='pairs',
-        metavar='P+J',
-        nargs='+',
+        "--pair",
+        "-p",
+        dest="pairs",
+        metavar="P+J",
+        nargs="+",
         required=False,
         default=[],
         help="list of username pairs (each pair is separated by space, format is username+username)"
         " to set explicitly in today's meetings (ex. --pair bill+susy). Any names outside this list will be"
-        " paired randomly like usual.")
+        " paired randomly like usual.",
+    )
     parser.add_argument(
-        '--size',
-        '-s',
-        dest='size',
+        "--size",
+        "-s",
+        dest="size",
         type=int,
         required=False,
         default=PAIRING_SIZE,
-        help="size of pairings (default set in config.py)")
+        help="size of pairings (default set in config.py)",
+    )
     parser.add_argument(
-        '--force-create',
-        action='store_true',
-        help='Create random meetings without user confirmation.')
+        "--force-create",
+        action="store_true",
+        help="Create random meetings without user confirmation.",
+    )
     parser.add_argument(
-        '--from-cron', action='store_true', help='Silence all log statements (stdout).')
+        "--from-cron", action="store_true", help="Silence all log statements (stdout)."
+    )
     parser.add_argument(
-        '--s3-sync',
-        action='store_true',
-        help='Synchronize SHELVE_FILE with AWS S3 before and after checking attendance.')
+        "--s3-sync",
+        action="store_true",
+        help="Synchronize SHELVE_FILE with AWS S3 before and after checking attendance.",
+    )
     parsed_args = parser.parse_args()
 
     if parsed_args.from_cron:

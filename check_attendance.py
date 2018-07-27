@@ -24,9 +24,9 @@ def check_attendance(store, sc, users=None):
         users (list): A list of users to ping for role call (overrides store['everyone'])
     """
     start = datetime.now()
-    todays_meeting = {'date': start.date(), 'available': [], 'out': []}
+    todays_meeting = {"date": start.date(), "available": [], "out": []}
     if not users:
-        users = store['everyone']
+        users = store["everyone"]
     user_len = len(users)
     messages_sent = {}
 
@@ -35,13 +35,14 @@ def check_attendance(store, sc, users=None):
             logging.info("Pinging %s...", user)
             message = sc.api_call(
                 "chat.postMessage",
-                channel='@' + user,
+                channel="@" + user,
                 as_user=True,
-                text=
-                "Will you be available for today's ({:%m/%d/%Y}) :coffee: and :bagel: meeting? (yes/no)".
-                format(todays_meeting['date']))
-            message['user'] = user
-            messages_sent[message['channel']] = message
+                text="Will you be available for today's ({:%m/%d/%Y}) :coffee: and :bagel: meeting? (yes/no)".format(
+                    todays_meeting["date"]
+                ),
+            )
+            message["user"] = user
+            messages_sent[message["channel"]] = message
 
         logging.info("Waiting for responses...")
         while True:
@@ -49,50 +50,62 @@ def check_attendance(store, sc, users=None):
             for event in events:
                 logging.debug(event)
 
-                if event['type'] == 'message' and event['channel'] in messages_sent and float(
-                        event['ts']) > float(messages_sent[event['channel']]['ts']):
-                    lower_txt = event['text'].lower().strip()
-                    user = messages_sent[event['channel']]['user']
-                    logging.info("%s responded with '%s'", user, event['text'].encode(
-                        'ascii', 'ignore'))
+                if (
+                    event["type"] == "message"
+                    and event["channel"] in messages_sent
+                    and float(event["ts"]) > float(messages_sent[event["channel"]]["ts"])
+                ):
+                    lower_txt = event["text"].lower().strip()
+                    user = messages_sent[event["channel"]]["user"]
+                    logging.info(
+                        "%s responded with '%s'", user, event["text"].encode("ascii", "ignore")
+                    )
 
                     user_responded = False
                     if lower_txt in YES:
                         user_responded = True
-                        todays_meeting['available'].append(user)
+                        todays_meeting["available"].append(user)
                         sc.api_call(
                             "chat.postMessage",
-                            channel=event['channel'],
+                            channel=event["channel"],
                             as_user=True,
-                            text="Your presence has been acknowledged! Thank you! :tada:")
+                            text="Your presence has been acknowledged! Thank you! :tada:",
+                        )
                     elif lower_txt in NO:
                         user_responded = True
-                        todays_meeting['out'].append(user)
+                        todays_meeting["out"].append(user)
                         sc.api_call(
                             "chat.postMessage",
-                            channel=event['channel'],
+                            channel=event["channel"],
                             as_user=True,
-                            text="Your absence has been acknowledged! You will be missed! :cry:")
+                            text="Your absence has been acknowledged! You will be missed! :cry:",
+                        )
 
                     if user_responded:
                         # User has responded to bagelbot, don't listen to this channel anymore.
-                        messages_sent.pop(event['channel'])
+                        messages_sent.pop(event["channel"])
 
-            all_accounted_for = len(todays_meeting['available']) + len(
-                todays_meeting['out']) == user_len
-            if datetime.now() > (
-                    start + timedelta(seconds=ATTENDANCE_TIME_LIMIT)) or all_accounted_for:
+            all_accounted_for = (
+                len(todays_meeting["available"]) + len(todays_meeting["out"]) == user_len
+            )
+            if (
+                datetime.now() > (start + timedelta(seconds=ATTENDANCE_TIME_LIMIT))
+                or all_accounted_for
+            ):
                 if not all_accounted_for:
                     # Move any remaining users over to 'out' at the end of the time limit - assuming they aren't available
-                    todays_meeting['out'] += [
-                        u for u in users
-                        if u not in todays_meeting['available'] and u not in todays_meeting['out']
+                    todays_meeting["out"] += [
+                        u
+                        for u in users
+                        if u not in todays_meeting["available"] and u not in todays_meeting["out"]
                     ]
 
-                logging.info("Finished! These people aren't available today: %s", ', '.join(
-                    todays_meeting['out']))
+                logging.info(
+                    "Finished! These people aren't available today: %s",
+                    ", ".join(todays_meeting["out"]),
+                )
                 # Store this upcoming meeting under a separate key for use by generate_meeting.py upon actual meeting generation.
-                store['upcoming'] = todays_meeting
+                store["upcoming"] = todays_meeting
                 break
             else:
                 time.sleep(1)
@@ -112,9 +125,9 @@ def main(args):
         download_shelve_from_s3()
 
     if args.debug:
-        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format='%(message)s')
+        logging.basicConfig(stream=sys.stdout, level=logging.DEBUG, format="%(message)s")
     else:
-        logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
     store, sc = initialize(update_everyone=True)
     try:
@@ -125,28 +138,34 @@ def main(args):
             upload_shelve_to_s3()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(
-        description="Check to see if any Slack members will be missing today's meeting.")
+        description="Check to see if any Slack members will be missing today's meeting."
+    )
     parser.add_argument(
-        '--users',
-        '-u',
-        dest='users',
-        metavar='P',
-        nargs='+',
+        "--users",
+        "-u",
+        dest="users",
+        metavar="P",
+        nargs="+",
         required=False,
         default=[],
-        help="list of people to check in with (usernames only)")
+        help="list of people to check in with (usernames only)",
+    )
     parser.add_argument(
-        '--from-cron', '-c', action='store_true', help='Silence all logging statements (stdout).')
+        "--from-cron", "-c", action="store_true", help="Silence all logging statements (stdout)."
+    )
     parser.add_argument(
-        '--debug', '-d', action='store_true', help='Log all events bagelbot can see.')
+        "--debug", "-d", action="store_true", help="Log all events bagelbot can see."
+    )
     parser.add_argument(
-        '--s3-sync',
-        '-s',
-        action='store_true',
-        help='Synchronize SHELVE_FILE with AWS S3 before and after checking attendance.')
+        "--s3-sync",
+        "-s",
+        action="store_true",
+        help="Synchronize SHELVE_FILE with AWS S3 before and after checking attendance.",
+    )
     parsed_args = parser.parse_args()
 
     if parsed_args.from_cron:

@@ -9,7 +9,7 @@ from utils import open_store
 
 store = open_store()
 for key in store:
-    print(' == {} == '.format(key))
+    print(" == {} == ".format(key))
     pprint(store[key])
     print()
 store.close()

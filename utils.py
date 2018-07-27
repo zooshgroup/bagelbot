@@ -11,8 +11,8 @@ from slackclient import SlackClient
 
 from config import EMAIL_DOMAIN, S3_BUCKET, S3_PREFIX, SLACK_TOKEN, SHELVE_FILE
 
-YES = frozenset(['yes', 'y', 'ye', ''])
-NO = frozenset(['no', 'n'])
+YES = frozenset(["yes", "y", "ye", ""])
+NO = frozenset(["no", "n"])
 
 
 def get_slack_client():
@@ -24,8 +24,8 @@ def get_slack_client():
     Returns:
         sc: A SlackClient instance
     """
-    if not SLACK_TOKEN or SLACK_TOKEN == 'yourtoken':
-        sys.exit('Exiting... SLACK_TOKEN was empty or not updated from the default in config.py.')
+    if not SLACK_TOKEN or SLACK_TOKEN == "yourtoken":
+        sys.exit("Exiting... SLACK_TOKEN was empty or not updated from the default in config.py.")
 
     return SlackClient(SLACK_TOKEN)
 
@@ -60,7 +60,7 @@ def open_store():
 def download_shelve_from_s3():
     """Download the SHELVE_FILE from S3_BUCKET & S3_PREFIX.
     """
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource("s3")
     key = os.path.join(S3_PREFIX, SHELVE_FILE) if S3_PREFIX else SHELVE_FILE
     s3.meta.client.download_file(S3_BUCKET, key, SHELVE_FILE)
 
@@ -68,7 +68,7 @@ def download_shelve_from_s3():
 def upload_shelve_to_s3():
     """Upload the SHELVE_FILE to S3_BUCKET & S3_PREFIX.
     """
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource("s3")
     key = os.path.join(S3_PREFIX, SHELVE_FILE) if S3_PREFIX else SHELVE_FILE
     s3.meta.client.upload_file(SHELVE_FILE, S3_BUCKET, key)
 
@@ -113,7 +113,10 @@ def update_everyone_from_slack(store, sc):
         sc = get_slack_client()
 
     users = sc.api_call("users.list")
-    store['everyone'] = [
-        m['name'] for m in users['members'] if not m['deleted'] and m['profile'].get('email')
-        and m['profile']['email'].endswith('@' + EMAIL_DOMAIN)
+    store["everyone"] = [
+        m["name"]
+        for m in users["members"]
+        if not m["deleted"]
+        and m["profile"].get("email")
+        and m["profile"]["email"].endswith("@" + EMAIL_DOMAIN)
     ]

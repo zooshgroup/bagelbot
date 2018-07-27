@@ -15,7 +15,7 @@ TIMEZONE = "US/Central"
 ATTENDANCE_TIME = {"hour": 11, "minute": 28, "weekday": 0}
 MEETING_TIME = {"hour": 14, "minute": 29, "weekday": 0}
 
-if os.path.exists('config_private.py'):
+if os.path.exists("config_private.py"):
     # Use config_private for your own personal settings - default to be git ignored.
     # Yup, intentionally using wildcard import to shadow the default values
     from config_private import *
