@@ -81,6 +81,9 @@ def create_meetings(
     if names_len < size:
         if found_upcoming:
             del store["upcoming"]
+        # Write out as a canceled meeting
+        todays_meeting["canceled"] = True
+        store["history"].append(todays_meeting)
         sc.api_call(
             "chat.postMessage",
             channel=SLACK_CHANNEL,
