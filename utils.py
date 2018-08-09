@@ -73,14 +73,27 @@ def upload_shelve_to_s3():
     s3.meta.client.upload_file(SHELVE_FILE, S3_BUCKET, key)
 
 
-class DummyFile(object):
+class DummyFile:
     """Used to silence stdout when scripts are ran from a cron.
 
     Note:
         http://stackoverflow.com/q/2828953/76267
     """
 
+    def read(self):
+        """
+        DummyFile has no read method.
+        """
+        raise NotImplementedError("No read method for DummyFile")
+
     def write(self, x):
+        """
+        Provide a defunct write method to silence stdout.
+
+        Args:
+            self (object): DummyFile Instance
+            x (str): Text passed to write to DummyFile
+        """
         pass
 
 
