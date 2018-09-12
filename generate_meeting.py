@@ -90,7 +90,8 @@ def create_meetings(
             as_user=True,
             text="Today's :coffee: and :bagel: has been canceled - not enough people are available!",
         )
-        sys.exit("ERROR: Not enough people to have a meeting, canceling request.")
+        logging.warning("Not enough people to have a meeting, canceling request.")
+        return True
 
     number_of_pairings = names_len // size
     out_remainder = names_len % size
