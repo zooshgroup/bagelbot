@@ -46,44 +46,48 @@ def check_attendance(store, sc, users=None):
 
         logging.info("Waiting for responses...")
         while True:
-            events = sc.rtm_read()
-            for event in events:
-                logging.debug(event)
+            try:
+                events = sc.rtm_read()
 
-                if (
-                    event["type"] == "message"
-                    and event["channel"] in messages_sent
-                    and float(event["ts"]) > float(messages_sent[event["channel"]]["ts"])
-                ):
-                    lower_txt = event["text"].lower().strip()
-                    user = messages_sent[event["channel"]]["user"]
-                    logging.info(
-                        "%s responded with '%s'", user, event["text"].encode("ascii", "ignore")
-                    )
+                for event in events:
+                    logging.debug(event)
 
-                    user_responded = False
-                    if lower_txt in YES:
-                        user_responded = True
-                        todays_meeting["available"].append(user)
-                        sc.api_call(
-                            "chat.postMessage",
-                            channel=event["channel"],
-                            as_user=True,
-                            text="Your presence has been acknowledged! Thank you! :tada:",
-                        )
-                    elif lower_txt in NO:
-                        user_responded = True
-                        todays_meeting["out"].append(user)
-                        sc.api_call(
-                            "chat.postMessage",
-                            channel=event["channel"],
-                            as_user=True,
-                            text="Your absence has been acknowledged! You will be missed! :cry:",
+                    if (
+                        event["type"] == "message"
+                        and event["channel"] in messages_sent
+                        and float(event["ts"]) > float(messages_sent[event["channel"]]["ts"])
+                    ):
+                        lower_txt = event["text"].lower().strip()
+                        user = messages_sent[event["channel"]]["user"]
+                        logging.info(
+                            "%s responded with '%s'", user, event["text"].encode("ascii", "ignore")
                         )
 
-                    if user_responded:
-                        # User has responded to bagelbot, don't listen to this channel anymore.
-                        messages_sent.pop(event["channel"])
+                        user_responded = False
+                        if lower_txt in YES:
+                            user_responded = True
+                            todays_meeting["available"].append(user)
+                            sc.api_call(
+                                "chat.postMessage",
+                                channel=event["channel"],
+                                as_user=True,
+                                text="Your presence has been acknowledged! Thank you! :tada:",
+                            )
+                        elif lower_txt in NO:
+                            user_responded = True
+                            todays_meeting["out"].append(user)
+                            sc.api_call(
+                                "chat.postMessage",
+                                channel=event["channel"],
+                                as_user=True,
+                                text="Your absence has been acknowledged! You will be missed! :cry:",
+                            )
+
+                        if user_responded:
+                            # User has responded to bagelbot, don't listen to this channel anymore.
+                            messages_sent.pop(event["channel"])
+            except:
+                logging.exception("Something went wrong reading Slack RTM Events.")
 
             all_accounted_for = (
                 len(todays_meeting["available"]) + len(todays_meeting["out"]) == user_len
