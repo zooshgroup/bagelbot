@@ -116,7 +116,7 @@ def update_everyone_from_slack(store, sc):
     """Updates our store's list of `everyone`.
 
     This list is comprised of all slack users with
-    the specified EMAIL_DOMAIN in config.py.
+    the specified EMAIL_DOMAIN in config.py that are not deleted or single-channel guests.
 
     Args:
         store (instance): A persistent, dictionary-like object used to keep
@@ -131,6 +131,7 @@ def update_everyone_from_slack(store, sc):
         m["name"]
         for m in users["members"]
         if not m["deleted"]
+        and not m["is_restricted"]
         and m["profile"].get("email")
         and m["profile"]["email"].endswith("@" + EMAIL_DOMAIN)
     ]
