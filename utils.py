@@ -119,7 +119,8 @@ def update_everyone_from_slack(store, sc):
     the specified EMAIL_DOMAIN in config.py.
 
     Args:
-        store (instance): A persistent, dictionary-like object used to keep information about past/future meetings
+        store (instance): A persistent, dictionary-like object used to keep
+        information about past/future meetings.
         sc (SlackClient): An instance of SlackClient
     """
     if not sc:
