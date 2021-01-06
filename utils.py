@@ -1,15 +1,19 @@
 """
 Bagelbot utility functions used by the different scripts.
 """
+import logging
 import contextlib
 import os
 import sys
 import shelve
 
 import boto3
+from botocore.exceptions import ClientError
 from slackclient import SlackClient
 
-from config import EMAIL_DOMAIN, S3_BUCKET, S3_PREFIX, SLACK_TOKEN, SHELVE_FILE
+from config import EMAIL_DOMAIN, S3_BUCKET, S3_PREFIX, SLACK_TOKEN, SHELVE_FILE, SLACK_CHANNEL_ID
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
 YES = frozenset(["yes", "y", "ye", ""])
 NO = frozenset(["no", "n"])
@@ -71,6 +75,7 @@ def upload_shelve_to_s3():
     s3 = boto3.resource("s3")
     key = os.path.join(S3_PREFIX, SHELVE_FILE) if S3_PREFIX else SHELVE_FILE
     s3.meta.client.upload_file(SHELVE_FILE, S3_BUCKET, key)
+    logging.info("Storage uploaded to S3 successfully")
 
 
 class DummyFile:
@@ -126,12 +131,17 @@ def update_everyone_from_slack(store, sc):
     if not sc:
         sc = get_slack_client()
 
-    users = sc.api_call("users.list")
+    users = sc.api_call( "conversations.members",channel=SLACK_CHANNEL_ID)
+    fullusers = [
+        sc.api_call( "users.info",user=member)
+        for member in users["members"]
+    ]
     store["everyone"] = [
-        m["name"]
-        for m in users["members"]
-        if not m["deleted"]
-        and not m["is_restricted"]
-        and m["profile"].get("email")
-        and m["profile"]["email"].endswith("@" + EMAIL_DOMAIN)
+        m["user"]["name"]
+        for m in fullusers
+        if not m["user"]["deleted"]
+        and not m["user"]["is_restricted"]
+        and not m["user"]["is_bot"]
+        and m["user"]["profile"].get("email")
+        and m["user"]["profile"]["email"].endswith("@" + EMAIL_DOMAIN)
     ]
