@@ -172,6 +172,8 @@ def create_meetings(
             if found_upcoming:
                 del store["upcoming"]
 
+            if "history" not in store:
+                store["history"] = []
             store["history"].append(todays_meeting)
             send_to_slack(pretty_attendees, pretty_whos_out, sc)
             break
