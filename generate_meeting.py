@@ -88,7 +88,7 @@ def create_meetings(
             "chat.postMessage",
             channel=SLACK_CHANNEL,
             as_user=True,
-            text="Today's :coffee: and :bagel: has been canceled - not enough people are available!",
+            text="Today's :coffee: has been canceled - not enough people are available!",
         )
         logging.warning("Not enough people to have a meeting, canceling request.")
         return True
@@ -150,7 +150,7 @@ def create_meetings(
         number_of_pairings -= 1
 
     # == Log Pairs ==
-    logging.info("\n== Pairings for %s ==\n", todays_meeting["date"].strftime("%m/%d/%Y"))
+    logging.info("\n== Pairings for %s ==\n", todays_meeting["date"].strftime("%Y-%m-%d"))
     pretty_attendees = "\n".join(
         format_attendees(pair, max_pair_size) for pair in todays_meeting["attendees"]
     )
@@ -225,7 +225,7 @@ def send_to_slack(pretty_attendees, pretty_whos_out, sc):
         "chat.postMessage",
         channel=SLACK_CHANNEL,
         as_user=True,
-        text="Today's :coffee: and :bagel: pairs are below!",
+        text="Today's :coffee: pairs are below!",
     )
     sc.api_call(
         "chat.postMessage",

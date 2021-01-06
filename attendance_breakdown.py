@@ -23,7 +23,7 @@ for person, info in attendance.iteritems():
     print(" Total Attended: {}".format(info["total"]))
     print(
         " Meeting Dates: {}".format(
-            ", ".join(d.strftime("%m/%d/%Y") for d in sorted(info["dates"]))
+            ", ".join(d.strftime("%Y-%m-%d") for d in sorted(info["dates"]))
         )
     )
     print()

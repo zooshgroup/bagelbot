@@ -37,7 +37,7 @@ def check_attendance(store, sc, users=None):
                 "chat.postMessage",
                 channel="@" + user,
                 as_user=True,
-                text="Will you be available for today's ({:%m/%d/%Y}) :coffee: and :bagel: meeting? (yes/no)".format(
+                text="Will you be available for today's ({:%Y-%m-%d}) :coffee: shuffle? [yes/no] - Please reply within 1 hour!".format(
                     todays_meeting["date"]
                 ),
             )

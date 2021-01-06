@@ -20,7 +20,7 @@ from utils import (
 )
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
-DATE_FMT = "%m/%d/%Y"
+DATE_FMT = "%Y-%m-%d"
 
 
 def main():
