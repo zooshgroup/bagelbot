@@ -7,7 +7,7 @@ SLACK_CHANNEL = "#general"
 SHELVE_FILE = "meetings.shelve"
 ATTENDANCE_TIME_LIMIT = 60 * 60
 PAIRING_SIZE = 3
-GOOGLE_HANGOUT_URL = "https://hangouts.google.com/hangouts/_/"
+GOOGLE_HANGOUT_URL = "https://g.co/meet/"
 S3_BUCKET = None
 S3_PREFIX = None
 FREQUENCY = timedelta(days=0)

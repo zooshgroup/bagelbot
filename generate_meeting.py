@@ -16,7 +16,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
 def get_google_hangout_url():
     """Get a Google Hangouts URL with a unique identifier appended."""
-    return "{}{}?authuser=0".format(GOOGLE_HANGOUT_URL, uuid4())
+    return "{}{}".format(GOOGLE_HANGOUT_URL, uuid4())
 
 
 def create_meetings(
