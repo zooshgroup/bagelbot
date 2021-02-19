@@ -10,6 +10,41 @@ from datetime import datetime, timedelta
 from config import ATTENDANCE_TIME_LIMIT
 from utils import YES, NO, initialize, nostdout, download_shelve_from_s3, upload_shelve_to_s3
 
+def create_time_limit_string():
+    """Create a string according to the time limit in the config
+    """
+    if (ATTENDANCE_TIME_LIMIT < 60):
+        return "%d seconds" % ATTENDANCE_TIME_LIMIT
+    if (ATTENDANCE_TIME_LIMIT >= 60 and ATTENDANCE_TIME_LIMIT < 120):  # Singular
+        mins = ATTENDANCE_TIME_LIMIT // 60
+        secs = ATTENDANCE_TIME_LIMIT % 60
+        time_string = "1 minute"
+        if secs > 0:
+            time_string += " and %d second" % secs
+        if secs > 1:
+            time_string += "s"
+        return time_string
+    hours = ATTENDANCE_TIME_LIMIT // (60*60)
+    mins = (ATTENDANCE_TIME_LIMIT // 60) - (hours * 60) 
+    secs = ATTENDANCE_TIME_LIMIT % 60
+    time_string = ""
+    if hours > 0:
+        time_string = "%d hour" % hours
+        if hours > 1:
+            time_string += "s"
+        if mins > 0 and secs > 0:
+            time_string += ", "
+        elif mins > 0:
+            time_string += " and "
+    if mins > 0:
+        time_string += "%d minute" % mins
+        if mins > 1:
+            time_string += "s"
+    if secs > 0:
+        time_string += " and %d second" % secs
+    if secs > 1:
+        time_string += "s"
+    return time_string
 
 def check_attendance(store, sc, users=None):
     """Pings all slack users with the email address stored in config.py.
@@ -29,6 +64,7 @@ def check_attendance(store, sc, users=None):
         users = store["everyone"]
     user_len = len(users)
     messages_sent = {}
+    time_string = create_time_limit_string()
 
     if sc.rtm_connect():
         for user in users:
@@ -37,8 +73,8 @@ def check_attendance(store, sc, users=None):
                 "chat.postMessage",
                 channel="@" + user,
                 as_user=True,
-                text="Will you be available for today's ({:%Y-%m-%d}) :coffee: shuffle? [yes/no] - Please reply within 1 hour!".format(
-                    todays_meeting["date"]
+                text="Will you be available for today's ({:%Y-%m-%d}) :coffee: shuffle? [yes/no] - Please reply within {}!".format(
+                    todays_meeting["date"], time_string
                 ),
             )
             message["user"] = user

@@ -18,9 +18,14 @@ def get_google_hangout_url():
     """Get a Google Hangouts URL with a unique identifier appended."""
     return "{}{}".format(GOOGLE_HANGOUT_URL, uuid4())
 
+def get_pairings_stings(pairings):
+    pairings_strings = []
+    for pair in pairings:
+        pairings_strings.append(",".join(sorted(pair)))
+    return pairings_strings
 
 def create_meetings(
-    store, sc, size=PAIRING_SIZE, whos_out=None, pairs=None, force_create=False, any_pair=False
+    store, sc, size=PAIRING_SIZE, whos_out=None, pairs=None, force_create=False, any_pair=False, same_day=False
 ):
     """Randomly generates sets of pairs for (usually) 1 on 1 meetings for a Slack team.
 
@@ -35,6 +40,7 @@ def create_meetings(
         pairs (list): List of slack users explictly pair up (elements of list are in the form of 'username+username')
         force_create (Optional[bool]): If True, generate the meeting and write it to storage without asking if it should.
         any_pair (Optional[bool]): If True, generate any pairing - regardless if it's happened in the past or not
+        same_day (Optional[bool]): If True, don't delete the planned meeting to create multiple meetings in the same day
 
     Returns:
         bool: True if successful, False otherwise.
@@ -104,7 +110,7 @@ def create_meetings(
         if "history" in store
         else []
     )
-
+    previous_pairings = get_pairings_stings(previous_pairings)
     # == Handle Random Pairs ==
     attempts = 1
     max_attempts = 25
@@ -133,14 +139,15 @@ def create_meetings(
 
         if not any_pair:
             pairing = frozenset(pairing)
-            if pairing in previous_pairings and attempts <= max_attempts:
+            pairing_string = ",".join(sorted(pairing))
+            if pairing_string in previous_pairings and attempts <= max_attempts:
                 logging.info(
                     "Generated already existing pair, going to try again (%s attempt(s) so far)",
                     attempts,
                 )
                 attempts += 1
                 continue
-            elif attempts > max_attempts:
+            if attempts > max_attempts:
                 logging.warning("Max randomizing attempts reached, Got to start over again!!!!")
                 return False
 
@@ -169,7 +176,7 @@ def create_meetings(
             answer = input("\nAccept and write to shelf storage? (y/n) ").lower()
 
         if answer in YES:
-            if found_upcoming:
+            if found_upcoming and not same_day:
                 del store["upcoming"]
 
             if "history" not in store:
@@ -269,20 +276,37 @@ def main(args):
                 whos_out=args.whos_out,
                 pairs=args.pairs,
                 force_create=args.force_create,
-                any_pair=attempt > max_attempts,
+                any_pair=args.any_pair,
+                same_day=args.same_day
             )
             attempt += 1
+            if attempt > max_attempts and not success:
+                break
     finally:
         store.close()
         if args.s3_sync:
             upload_shelve_to_s3()
 
+    if not success:
+        logging.error("Failed to find pairs!")
 
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(
         description="Generate random Coffee & Bagel meetups to promote synergy!"
+    )
+    parser.add_argument(
+        "--any-pair",
+        action="store_true",
+        required=False,
+        help="Ignore previous pairings",
+    )
+    parser.add_argument(
+        "--same-day",
+        action="store_true",
+        required=False,
+        help="Don't delete the planned meeting upon creation, to allow multiple meetings with the same attendence",
     )
     parser.add_argument(
         "--out",
