@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-EMAIL_DOMAIN = "example.com"
+EMAIL_DOMAINS = "example.com"
 SLACK_TOKEN = "yourtoken"
 SLACK_CHANNEL = "#general"
 SHELVE_FILE = "meetings.shelve"

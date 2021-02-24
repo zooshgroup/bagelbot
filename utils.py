@@ -11,7 +11,7 @@ import boto3
 from botocore.exceptions import ClientError
 from slackclient import SlackClient
 
-from config import EMAIL_DOMAIN, S3_BUCKET, S3_PREFIX, SLACK_TOKEN, SHELVE_FILE, SLACK_CHANNEL_ID
+from config import EMAIL_DOMAINS, S3_BUCKET, S3_PREFIX, SLACK_TOKEN, SHELVE_FILE, SLACK_CHANNEL_ID
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
@@ -117,6 +117,18 @@ def nostdout():
     sys.stdout = save_stdout
 
 
+def check_domain(domains, email):
+    """Alows filtering multiple domains
+
+    Args:
+        domains: a list of domains
+        email: an email address to test
+    """
+    for domain in domains:
+        if email.endswith("@" + domain):
+            return True
+    return False
+
 def update_everyone_from_slack(store, sc):
     """Updates our store's list of `everyone`.
 
@@ -136,6 +148,7 @@ def update_everyone_from_slack(store, sc):
         sc.api_call( "users.info",user=member)
         for member in users["members"]
     ]
+    domains=EMAIL_DOMAINS.split(",")
     store["everyone"] = [
         m["user"]["name"]
         for m in fullusers
@@ -143,5 +156,5 @@ def update_everyone_from_slack(store, sc):
         and not m["user"]["is_restricted"]
         and not m["user"]["is_bot"]
         and m["user"]["profile"].get("email")
-        and m["user"]["profile"]["email"].endswith("@" + EMAIL_DOMAIN)
+        and check_domain(domains, m["user"]["profile"]["email"])
     ]
