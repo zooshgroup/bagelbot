@@ -13,7 +13,9 @@ S3_PREFIX = None
 FREQUENCY = timedelta(days=0)
 TIMEZONE = "US/Central"
 ATTENDANCE_TIME = {"hour": 11, "minute": 28, "weekday": 0}
+ATTENDANCE_TIME_ALT = {"hour": 11, "minute": 28, "weekday": 0}
 MEETING_TIME = {"hour": 14, "minute": 29, "weekday": 0}
+MEETING_TIME_ALT = {"hour": 14, "minute": 29, "weekday": 0}
 
 if os.path.exists("config_private.py"):
     # Use config_private for your own personal settings - default to be git ignored.

@@ -9,7 +9,7 @@ from datetime import datetime
 
 from pytz import timezone
 
-from config import ATTENDANCE_TIME, FREQUENCY, MEETING_TIME, S3_BUCKET, TIMEZONE
+from config import ATTENDANCE_TIME, ATTENDANCE_TIME_ALT, FREQUENCY, MEETING_TIME, MEETING_TIME_ALT, S3_BUCKET, TIMEZONE
 from check_attendance import check_attendance
 from generate_meeting import create_meetings
 from utils import (
@@ -53,6 +53,13 @@ def main():
                     now.minute == ATTENDANCE_TIME["minute"],
                     now.weekday() == ATTENDANCE_TIME["weekday"],
                 ]
+            ) or all(
+                [
+                    (now.date() - last_meeting["date"]) >= FREQUENCY,
+                    now.hour == ATTENDANCE_TIME_ALT["hour"],
+                    now.minute == ATTENDANCE_TIME_ALT["minute"],
+                    now.weekday() == ATTENDANCE_TIME_ALT["weekday"],
+                ]
             )
             logging.info("Is it attendance checking time? %s", attendance_time)
 
@@ -63,6 +70,13 @@ def main():
                     now.hour == MEETING_TIME["hour"],
                     now.minute == MEETING_TIME["minute"],
                     now.weekday() == MEETING_TIME["weekday"],
+                ]
+            ) or all(
+                [
+                    (now.date() - last_meeting["date"]) >= FREQUENCY,
+                    now.hour == MEETING_TIME_ALT["hour"],
+                    now.minute == MEETING_TIME_ALT["minute"],
+                    now.weekday() == MEETING_TIME_ALT["weekday"],
                 ]
             )
             logging.info("Is it meeting generating time? %s", meeting_time)
